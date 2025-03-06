@@ -8,11 +8,13 @@ app.use(express.json());
 app.use(cors());
 
 const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: "virtualstore"
+    host: "sql5.freesqldatabase.com",
+    user: "sql5766183",
+    password: "FkF7jmBren",
+    database: "sql5766183",
+    port: 3306
 });
+
 
 db.connect(err => {
     if (err) {
