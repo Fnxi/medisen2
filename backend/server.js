@@ -7,6 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Conexión con MySQL
 const db = mysql.createConnection({
     host: "sql5.freesqldatabase.com",
     user: "sql5766183",
@@ -42,7 +43,6 @@ app.post("/api/registrar", (req, res) => {
         return res.status(400).send("La contraseña es requerida");
     }
 
-    // Hashing de la contraseña
     bcrypt.hash(password, 10, (err, hashedPassword) => {
         if (err) {
             console.error("Error al hashear la contraseña:", err);
@@ -62,7 +62,7 @@ app.post("/api/registrar", (req, res) => {
     });
 });
 
-// Ruta de inicio de sesión (comparar contraseñas)
+// Ruta de inicio de sesión
 app.post("/api/login", (req, res) => {
     const { email, password } = req.body;
 
@@ -80,7 +80,6 @@ app.post("/api/login", (req, res) => {
 
         const user = result[0];
 
-        // Comparar la contraseña proporcionada con la almacenada (hasheada)
         bcrypt.compare(password, user.password, (err, isMatch) => {
             if (err) {
                 console.error("Error al comparar contraseñas:", err);
@@ -129,7 +128,5 @@ app.delete("/api/productos/:id", (req, res) => {
     });
 });
 
-const port = process.env.PORT || 5000; // Usa el puerto asignado por Vercel
-app.listen(port, () => {
-    console.log(`Servidor corriendo en el puerto ${port}`);
-});
+// Exportar la función para Vercel
+module.exports = app;
