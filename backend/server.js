@@ -128,5 +128,5 @@ app.delete("/api/productos/:id", (req, res) => {
     });
 });
 
-// Exportar la función para Vercel
+// Exportar la app para Vercel
 module.exports = app;
