@@ -68,7 +68,7 @@ function Formulario({ closeModal, onLoginSuccess }) {
                 }
             } else {
                 // Enviar datos de registro
-                await axios.post("http://localhost:5000/registrar", formData);
+                await axios.post("https://medisen2-pj7q.vercel.app/api/registrar", formData);
                 alert("Registro exitoso. Ahora puedes iniciar sesión.");
                 setIsLogin(true); // Cambiar a formulario de login
             }
