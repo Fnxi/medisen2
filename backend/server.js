@@ -15,7 +15,6 @@ const db = mysql.createConnection({
     port: 3306
 });
 
-
 db.connect(err => {
     if (err) {
         console.error("Error de conexión a MySQL:", err);
@@ -25,7 +24,7 @@ db.connect(err => {
 });
 
 // Obtener productos
-app.get("/productos", (req, res) => {
+app.get("/api/productos", (req, res) => {
     db.query("SELECT * FROM productos", (err, result) => {
         if (err) {
             res.status(500).send(err);
@@ -36,7 +35,7 @@ app.get("/productos", (req, res) => {
 });
 
 // Ruta de registro (con hashing de la contraseña)
-app.post("/registrar", (req, res) => {
+app.post("/api/registrar", (req, res) => {
     const { name, age, email, birthDate, birthPlace, gender, civilStatus, password } = req.body;
 
     if (!password) {
@@ -64,7 +63,7 @@ app.post("/registrar", (req, res) => {
 });
 
 // Ruta de inicio de sesión (comparar contraseñas)
-app.post("/login", (req, res) => {
+app.post("/api/login", (req, res) => {
     const { email, password } = req.body;
 
     const query = "SELECT * FROM usuarios WHERE email = ?";
@@ -90,7 +89,7 @@ app.post("/login", (req, res) => {
 
             if (!isMatch) {
                 console.log("Contraseña incorrecta");
-                return res.status(400).Sjson({ success: false, message: "Contraseña incorrecta" });
+                return res.status(400).json({ success: false, message: "Contraseña incorrecta" });
             }
 
             console.log("Inicio de sesión exitoso");
@@ -98,8 +97,9 @@ app.post("/login", (req, res) => {
         });
     });
 });
+
 // Actualizar un producto
-app.put("/productos/:id", (req, res) => {
+app.put("/api/productos/:id", (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, precio } = req.body;
 
@@ -116,7 +116,7 @@ app.put("/productos/:id", (req, res) => {
 });
 
 // Eliminar un producto
-app.delete("/productos/:id", (req, res) => {
+app.delete("/api/productos/:id", (req, res) => {
     const { id } = req.params;
 
     const query = "DELETE FROM productos WHERE id = ?";
@@ -129,9 +129,7 @@ app.delete("/productos/:id", (req, res) => {
     });
 });
 
-
 const port = process.env.PORT || 5000; // Usa el puerto asignado por Vercel
 app.listen(port, () => {
     console.log(`Servidor corriendo en el puerto ${port}`);
 });
-
