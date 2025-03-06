@@ -6,14 +6,14 @@
       "use": "@vercel/static-build"
     },
     {
-      "src": "backend/server.js",  // O "server.js" si decides cambiarlo
+      "src": "backend/server.js",  
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/server.js"  // O "server.js" si decides cambiarlo
+      "dest": "backend/server.js" 
     },
     {
       "src": "/(.*)",
