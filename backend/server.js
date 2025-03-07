@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Conexión con MySQL
+// Conexión con MySQL (sin `db.connect()`)
 const db = mysql.createPool({
     host: "sql5.freesqldatabase.com",
     user: "sql5766183",
@@ -17,15 +17,6 @@ const db = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-});
-
-
-db.connect(err => {
-    if (err) {
-        console.error("Error de conexión a MySQL:", err);
-    } else {
-        console.log("Conectado a MySQL");
-    }
 });
 
 // Obtener productos
@@ -39,7 +30,7 @@ app.get("/api/productos", (req, res) => {
     });
 });
 
-// Ruta de registro (con hashing de la contraseña)
+// Ruta de registro
 app.post("/api/registrar", (req, res) => {
     const { name, age, email, birthDate, birthPlace, gender, civilStatus, password } = req.body;
 
