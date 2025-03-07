@@ -8,13 +8,17 @@ app.use(express.json());
 app.use(cors());
 
 // Conexión con MySQL
-const db = mysql.createConnection({
+const db = mysql.createPool({
     host: "sql5.freesqldatabase.com",
     user: "sql5766183",
     password: "FkF7jmBren",
     database: "sql5766183",
-    port: 3306
+    port: 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
+
 
 db.connect(err => {
     if (err) {
