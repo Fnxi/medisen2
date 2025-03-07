@@ -21,8 +21,8 @@ const FormProducto = ({ closeModal, productoEditando, setProductos }) => {
         const data = { nombre, descripcion, precio, cantidad };
 
         const url = productoEditando 
-            ? `http://localhost:5000/productos/${productoEditando.id}`
-            : 'http://localhost:5000/productos';
+            ? `https://medisen2-pj7q.vercel.app/api/productos/${productoEditando.id}`
+            : 'https://medisen2-pj7q.vercel.app/api/productos';
 
         const method = productoEditando ? 'put' : 'post';
 
