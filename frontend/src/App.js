@@ -14,12 +14,11 @@ function App() {
     const [userData, setUserData] = useState(null); 
     const [userType, setUserType] = useState(null); 
 
-
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
     useEffect(() => {
         if (isAuthenticated && userData) {
-            axios.get("http://localhost:5000/productos")
+            axios.get("https://medisen2-pj7q.vercel.app/api/productos")
                 .then(response => setProductos(response.data.filter(producto => producto.estado === 1)))
                 .catch(error => console.error("Error obteniendo productos:", error));
         }
@@ -41,7 +40,7 @@ function App() {
     };
 
     const handleEliminar = (id) => {
-        axios.put(`http://localhost:5000/productos/${id}`, { estado: 0 })
+        axios.put(`https://medisen2-pj7q.vercel.app/api/productos/${id}`, { estado: 0 })
             .then(() => {
                 setProductos(productos.filter(producto => producto.id !== id));
             })
@@ -123,34 +122,30 @@ function App() {
             {mostrarFormulario && <FormProducto closeModal={cerrarFormulario} productoEditando={productoEditando} setProductos={setProductos} />}
             {!isAuthenticated && <Formulario onLoginSuccess={handleLoginSuccess} />}
             {userType === 1 && (
-               
-               
                 <div>
-                <h3 className="text-center">Bienvenido Usuario</h3>
-                <h3 className="text-center">Productos Disponibles</h3>
-                <div className="row">
-                    {productos.map(producto => (
-                        <div className="col-md-4 mb-4" key={producto.id}>
-                            <div className="card h-100">
-                                <img src={producto.imagen} className="card-img-top" alt={producto.nombre} />
-                                <div className="card-body">
-                                    <h5 className="card-title">{producto.nombre}</h5>
-                                    <p className="card-text">{producto.descripcion}</p>
-                                    <p className="card-text"><strong>Precio:</strong> ${producto.precio}</p>
-                                    <p className="card-text"><strong>Cantidad:</strong> {producto.cantidad}</p>
+                    <h3 className="text-center">Bienvenido Usuario</h3>
+                    <h3 className="text-center">Productos Disponibles</h3>
+                    <div className="row">
+                        {productos.map(producto => (
+                            <div className="col-md-4 mb-4" key={producto.id}>
+                                <div className="card h-100">
+                                    <img src={producto.imagen} className="card-img-top" alt={producto.nombre} />
+                                    <div className="card-body">
+                                        <h5 className="card-title">{producto.nombre}</h5>
+                                        <p className="card-text">{producto.descripcion}</p>
+                                        <p className="card-text"><strong>Precio:</strong> ${producto.precio}</p>
+                                        <p className="card-text"><strong>Cantidad:</strong> {producto.cantidad}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
                 </div>
             )}
-             {userType === 3 && (
+            {userType === 3 && (
                 <div>
-                    <div>
-                        <h3 className="text-center">Bienvenido Medico</h3>
-                        <h3 className="text-center">Formulario de receta medica</h3>
-                    </div>
+                    <h3 className="text-center">Bienvenido Medico</h3>
+                    <h3 className="text-center">Formulario de receta medica</h3>
                     <div className="container mt-4">
                         <div className="row">
                             <div className="col-md-6">
@@ -179,7 +174,6 @@ function App() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
