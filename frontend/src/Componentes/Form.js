@@ -55,7 +55,7 @@ function Formulario({ closeModal, onLoginSuccess }) {
         try {
             if (isLogin) {
                 // Enviar datos de inicio de sesión
-                const response = await axios.post("http://localhost:5000/login", {
+                const response = await axios.post("https://medisen2-pj7q.vercel.app/api/login", {
                     email: formData.email,
                     password: formData.password
                 });
@@ -172,4 +172,3 @@ const styles = {
 };
 
 export default Formulario;
-
