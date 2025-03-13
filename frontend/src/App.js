@@ -15,6 +15,7 @@ function App() {
     const [userType, setUserType] = useState(null);
     const [mostrarTienda, setMostrarTienda] = useState(false);
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
+    const [cantidadSeleccionada, setCantidadSeleccionada] = useState({}); // Para manejar la cantidad seleccionada
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
@@ -63,6 +64,16 @@ function App() {
     const handleIrATienda = () => {
         setMostrarBienvenida(false);
         setMostrarTienda(true);
+    };
+
+    // Maneja la cantidad seleccionada para cada producto
+    const handleCantidadChange = (id, cantidad) => {
+        if (cantidad <= productos.find(producto => producto.id === id).cantidad) {
+            setCantidadSeleccionada(prevState => ({
+                ...prevState,
+                [id]: cantidad
+            }));
+        }
     };
 
     return (
@@ -149,6 +160,19 @@ function App() {
                                                     <p className="card-text">{producto.descripcion}</p>
                                                     <p className="card-text"><strong>Precio:</strong> ${producto.precio}</p>
                                                     <p className="card-text"><strong>Cantidad:</strong> {producto.cantidad}</p>
+                                                    <div className="mb-3">
+                                                        <label htmlFor={`cantidad_${producto.id}`} className="form-label">Cantidad</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control"
+                                                            id={`cantidad_${producto.id}`}
+                                                            min="1"
+                                                            max={producto.cantidad}
+                                                            value={cantidadSeleccionada[producto.id] || 1}
+                                                            onChange={(e) => handleCantidadChange(producto.id, e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <button className="btn btn-success">Comprar</button>
                                                 </div>
                                             </div>
                                         </div>
