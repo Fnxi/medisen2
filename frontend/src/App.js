@@ -19,6 +19,17 @@ function App() {
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
+    // Recuperar los datos de la sesión desde localStorage al cargar la página
+    useEffect(() => {
+        const storedUserData = localStorage.getItem("userData");
+        if (storedUserData) {
+            const parsedUserData = JSON.parse(storedUserData);
+            setUserData(parsedUserData);
+            setUserType(parsedUserData.user);
+            setIsAuthenticated(true);
+        }
+    }, []);
+
     useEffect(() => {
         if (isAuthenticated && userData) {
             axios.get("https://medisen2-pj7q.vercel.app/api/productos")
@@ -35,6 +46,7 @@ function App() {
         setUserType(userDataFromResponse.user);
         setIsAuthenticated(true);
         cerrarFormulario();
+        localStorage.setItem("userData", JSON.stringify(userDataFromResponse));  // Guardamos los datos del usuario en localStorage
         if (userDataFromResponse.user === 1) {
             setMostrarBienvenida(true);
         }
@@ -76,6 +88,13 @@ function App() {
         }
     };
 
+    const handleLogout = () => {
+        setIsAuthenticated(false);
+        setUserData(null);
+        setUserType(null);
+        localStorage.removeItem("userData");  // Limpiamos los datos del usuario
+    };
+
     return (
         <div className="container-fluid">
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -96,7 +115,7 @@ function App() {
                         ) : (
                             <ul className="navbar-nav">
                                 <li className="nav-item"><a className="nav-link" href="#">Perfil</a></li>
-                                <li className="nav-item"><button className="btn btn-danger" onClick={() => setIsAuthenticated(false)}>Cerrar Sesión</button></li>
+                                <li className="nav-item"><button className="btn btn-danger" onClick={handleLogout}>Cerrar Sesión</button></li>
                             </ul>
                         )}
                     </div>
@@ -205,10 +224,10 @@ function App() {
                                                 <input type="text" className="form-control" id="dosis" />
                                             </div>
                                             <div className="mb-3">
-                                                <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
-                                                <textarea className="form-control" id="indicaciones"></textarea>
+                                                <label htmlFor="observaciones" className="form-label">Observaciones</label>
+                                                <textarea className="form-control" id="observaciones"></textarea>
                                             </div>
-                                            <button type="submit" className="btn btn-primary">Enviar</button>
+                                            <button type="submit" className="btn btn-primary">Generar Receta</button>
                                         </form>
                                     </div>
                                 </div>
