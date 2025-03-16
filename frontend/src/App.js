@@ -43,24 +43,24 @@ function App() {
     }, [isAuthenticated, userData]);
 
     // Obtener datos de Firebase para el médico (usuario tipo 3)
-      useEffect(() => {
-        if (isAuthenticated && userData) {
-            // Obtener datos de Firebase para el médico (usuario tipo 3)
-            if (userType === 3) {
-                const medicionesRef = ref(database, 'Mediciones/'); // Cambia 'mediciones' por la ruta correcta en tu base de datos
-                onValue(medicionesRef, (snapshot) => {
-                    const data = snapshot.val();
-                    const datos = [];
-                    for (let id in data) {
-                        if (data[id].userId === userData.id) { // Filtra por el identificador del médico
-                            datos.push(data[id]);
-                        }
-                    }
-                    setDatosMedico(datos);
-                });
-            }
+    // Obtener datos de Firebase sin filtrar por el usuario
+useEffect(() => {
+    if (isAuthenticated && userData) {
+        // Obtener datos de Firebase para el médico (usuario tipo 3)
+        if (userType === 3) {
+            const medicionesRef = ref(database, 'Mediciones/'); // Cambia 'mediciones' por la ruta correcta en tu base de datos
+            onValue(medicionesRef, (snapshot) => {
+                const data = snapshot.val();
+                const datos = [];
+                for (let id in data) {
+                    datos.push(data[id]);
+                }
+                setDatosMedico(datos);
+            });
         }
-    }, [isAuthenticated, userData, userType]);
+    }
+}, [isAuthenticated, userData, userType]);
+
 
     const abrirFormulario = () => setMostrarFormulario(true);
     const cerrarFormulario = () => setMostrarFormulario(false);
@@ -235,13 +235,41 @@ function App() {
                         )}
 
                       {userType === 3 && datosMedico.length > 0 && (
-                            <div>
-                                <h3 className="text-center">Datos del Médico</h3>
-                                <div className="d-flex justify-content-center">
-                                    <PieChart data={generarDatosGraficoMedico()} style={{ height: '300px' }} />
-                                </div>
-                            </div>
-                        )}
+    <div>
+        <h3 className="text-center">Datos del Médico</h3>
+        <table className="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Frecuencia Cardíaca</th>
+                    <th>Humedad</th>
+                    <th>Presión</th>
+                    <th>Promedio Salud</th>
+                    <th>SpO2</th>
+                    <th>Temperatura Ambiente</th>
+                    <th>Temperatura Objeto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {datosMedico.map((medicion, index) => (
+                    <tr key={index}>
+                        <td>{medicion.Fecha}</td>
+                        <td>{medicion.Hora}</td>
+                        <td>{medicion.Frecuencia_Cardiaca}</td>
+                        <td>{medicion.Humedad}</td>
+                        <td>{medicion.Presion}</td>
+                        <td>{medicion.Promedio_Salud}</td>
+                        <td>{medicion.SpO2}</td>
+                        <td>{medicion.Temperatura_Ambiente}</td>
+                        <td>{medicion.Temperatura_Objeto}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    </div>
+)}
+
                     </>
                 )}
 
