@@ -6,6 +6,9 @@ import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
+// Importa Firebase y Realtime Database
+import { database, ref, onValue } from './firebase';
+
 function App() {
     const [productos, setProductos] = useState([]);
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -16,6 +19,7 @@ function App() {
     const [mostrarTienda, setMostrarTienda] = useState(false);
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
     const [cantidadSeleccionada, setCantidadSeleccionada] = useState({}); // Para manejar la cantidad seleccionada
+    const [datosMedico, setDatosMedico] = useState([]); // Para almacenar los datos del medico desde Firebase
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
@@ -37,6 +41,23 @@ function App() {
                 .catch(error => console.error("Error obteniendo productos:", error));
         }
     }, [isAuthenticated, userData]);
+
+    // Obtener datos de Firebase para el médico (usuario tipo 3)
+    useEffect(() => {
+        if (userType === 3) {
+            const medicoRef = ref(database, 'medicos/'); // Cambia 'medicos' por la ruta correcta en tu base de datos
+            onValue(medicoRef, (snapshot) => {
+                const data = snapshot.val();
+                const datos = [];
+                for (let id in data) {
+                    if (data[id].medicoId === userData.id) { // Filtra por el identificador del medico
+                        datos.push(data[id]);
+                    }
+                }
+                setDatosMedico(datos);
+            });
+        }
+    }, [userType, userData]);
 
     const abrirFormulario = () => setMostrarFormulario(true);
     const cerrarFormulario = () => setMostrarFormulario(false);
@@ -93,6 +114,15 @@ function App() {
         setUserData(null);
         setUserType(null);
         localStorage.removeItem("userData");  // Limpiamos los datos del usuario
+    };
+
+    // Función para generar datos para la gráfica de médico
+    const generarDatosGraficoMedico = () => {
+        return datosMedico.map((dato, index) => ({
+            title: dato.nombre || "Datos del Medico", // Cambia según lo que tengas en la base de datos
+            value: dato.cantidad || 0, // Cambia según lo que desees mostrar
+            color: colores[index % colores.length]
+        }));
     };
 
     return (
@@ -199,43 +229,28 @@ function App() {
                                 </div>
                             </div>
                         )}
-                    </>
-                )}
-            </div>
-            {mostrarFormulario && <FormProducto closeModal={cerrarFormulario} productoEditando={productoEditando} setProductos={setProductos} />}
-            {!isAuthenticated && <Formulario onLoginSuccess={handleLoginSuccess} />}
-            {userType === 3 && (
-                <div>
-                    <h3 className="text-center">Bienvenido Medico</h3>
-                    <h3 className="text-center">Formulario de receta medica</h3>
-                    <div className="container mt-4">
-                        <div className="row">
-                            <div className="col-md-6">
-                                <div className="card">
-                                    <div className="card-body">
-                                        <h5 className="card-title">Receta Medica</h5>
-                                        <form>
-                                            <div className="mb-3">
-                                                <label htmlFor="medicamento" className="form-label">Medicamento</label>
-                                                <input type="text" className="form-control" id="medicamento" />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label htmlFor="dosis" className="form-label">Dosis</label>
-                                                <input type="text" className="form-control" id="dosis" />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label htmlFor="observaciones" className="form-label">Observaciones</label>
-                                                <textarea className="form-control" id="observaciones"></textarea>
-                                            </div>
-                                            <button type="submit" className="btn btn-primary">Generar Receta</button>
-                                        </form>
-                                    </div>
+
+                        {userType === 3 && datosMedico.length > 0 && (
+                            <div>
+                                <h3 className="text-center">Datos del Médico</h3>
+                                <div className="d-flex justify-content-center">
+                                    <PieChart data={generarDatosGraficoMedico()} style={{ height: '300px' }} />
                                 </div>
                             </div>
-                        </div>
+                        )}
+                    </>
+                )}
+
+                {!isAuthenticated && mostrarFormulario && (
+                    <Formulario onLoginSuccess={handleLoginSuccess} />
+                )}
+
+                {!isAuthenticated && !mostrarFormulario && (
+                    <div className="text-center">
+                        <p>Por favor, inicia sesión para acceder al contenido.</p>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
