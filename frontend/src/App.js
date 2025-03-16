@@ -19,7 +19,7 @@ function App() {
     const [mostrarTienda, setMostrarTienda] = useState(false);
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
     const [cantidadSeleccionada, setCantidadSeleccionada] = useState({}); // Para manejar la cantidad seleccionada
-    const [datosMedico, setDatosMedico] = useState([]); // Para almacenar los datos del medico desde Firebase
+    const [datosMedico, setDatosMedico] = useState([]); 
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
@@ -43,21 +43,24 @@ function App() {
     }, [isAuthenticated, userData]);
 
     // Obtener datos de Firebase para el médico (usuario tipo 3)
-    useEffect(() => {
-        if (userType === 3) {
-            const medicoRef = ref(database, 'medicos/'); // Cambia 'medicos' por la ruta correcta en tu base de datos
-            onValue(medicoRef, (snapshot) => {
-                const data = snapshot.val();
-                const datos = [];
-                for (let id in data) {
-                    if (data[id].medicoId === userData.id) { // Filtra por el identificador del medico
-                        datos.push(data[id]);
+      useEffect(() => {
+        if (isAuthenticated && userData) {
+            // Obtener datos de Firebase para el médico (usuario tipo 3)
+            if (userType === 3) {
+                const medicionesRef = ref(database, 'Mediciones/'); // Cambia 'mediciones' por la ruta correcta en tu base de datos
+                onValue(medicionesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    const datos = [];
+                    for (let id in data) {
+                        if (data[id].userId === userData.id) { // Filtra por el identificador del médico
+                            datos.push(data[id]);
+                        }
                     }
-                }
-                setDatosMedico(datos);
-            });
+                    setDatosMedico(datos);
+                });
+            }
         }
-    }, [userType, userData]);
+    }, [isAuthenticated, userData, userType]);
 
     const abrirFormulario = () => setMostrarFormulario(true);
     const cerrarFormulario = () => setMostrarFormulario(false);
@@ -117,10 +120,11 @@ function App() {
     };
 
     // Función para generar datos para la gráfica de médico
-    const generarDatosGraficoMedico = () => {
-        return datosMedico.map((dato, index) => ({
-            title: dato.nombre || "Datos del Medico", // Cambia según lo que tengas en la base de datos
-            value: dato.cantidad || 0, // Cambia según lo que desees mostrar
+      const generarDatosGraficoMedico = () => {
+        // Creamos los datos para la gráfica a partir de las mediciones
+        return datosMedico.map((medicion, index) => ({
+            title: `Medición ${index + 1}`, // Nombre para la medición (opcional)
+            value: medicion.Promedio_Salud, // Usa el Promedio_Salud o el valor de la medición que quieras mostrar
             color: colores[index % colores.length]
         }));
     };
@@ -230,7 +234,7 @@ function App() {
                             </div>
                         )}
 
-                        {userType === 3 && datosMedico.length > 0 && (
+                      {userType === 3 && datosMedico.length > 0 && (
                             <div>
                                 <h3 className="text-center">Datos del Médico</h3>
                                 <div className="d-flex justify-content-center">
