@@ -378,6 +378,22 @@ function App() {
                                         ))}
                                     </tbody>
                                 </table>
+                                <h3 className="text-center">Formulario de Recetario</h3>
+                                <form>
+                                    <div className="mb-3">
+                                        <label htmlFor="medicamento" className="form-label">Medicamento</label>
+                                        <input type="text" className="form-control" id="medicamento" />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="dosis" className="form-label">Dosis</label>
+                                        <input type="text" className="form-control" id="dosis" />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
+                                        <textarea className="form-control" id="indicaciones" rows="3"></textarea>
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">Enviar</button>
+                                </form>
                             </div>
                         )}
                     </>
