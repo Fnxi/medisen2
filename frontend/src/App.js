@@ -18,9 +18,10 @@ function App() {
     const [userType, setUserType] = useState(null);
     const [mostrarTienda, setMostrarTienda] = useState(false);
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
-    const [cantidadSeleccionada, setCantidadSeleccionada] = useState({}); // Para manejar la cantidad seleccionada
+    const [cantidadSeleccionada, setCantidadSeleccionada] = useState({});
     const [datosMedico, setDatosMedico] = useState([]);
-    const [carrito, setCarrito] = useState([]); // Estado para el carrito
+    const [carrito, setCarrito] = useState([]);
+    const [mostrarCarrito, setMostrarCarrito] = useState(false); // Estado para mostrar/ocultar el carrito
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
@@ -118,6 +119,7 @@ function App() {
     const handleIrATienda = () => {
         setMostrarBienvenida(false);
         setMostrarTienda(true);
+        setMostrarCarrito(false);
     };
 
     const handleCantidadChange = (id, cantidad) => {
@@ -183,9 +185,18 @@ function App() {
                     </button>
                     <div className="collapse navbar-collapse" id="navbarNav">
                         <ul className="navbar-nav me-auto">
-                            <li className="nav-item"><a className="nav-link text-white" href="#" onClick={() => { setMostrarBienvenida(true); setMostrarTienda(false); }}>Inicio</a></li>
+                            <li className="nav-item">
+                                <a className="nav-link text-white" href="#" onClick={() => { setMostrarBienvenida(true); setMostrarTienda(false); setMostrarCarrito(false); }}>Inicio</a>
+                            </li>
                             {userType === 1 && (
-                                <li className="nav-item"><a className="nav-link text-white" href="#" onClick={handleIrATienda}>Tienda</a></li>
+                                <>
+                                    <li className="nav-item">
+                                        <a className="nav-link text-white" href="#" onClick={handleIrATienda}>Tienda</a>
+                                    </li>
+                                    <li className="nav-item">
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarCarrito(true); setMostrarTienda(false); setMostrarBienvenida(false); }}>Carrito</a>
+                                    </li>
+                                </>
                             )}
                         </ul>
                         {!isAuthenticated ? (
@@ -278,33 +289,38 @@ function App() {
                             </div>
                         )}
 
-                        {userType === 1 && carrito.length > 0 && (
+                        {userType === 1 && mostrarCarrito && (
                             <div>
                                 <h3 className="text-center">Carrito de Compras</h3>
-                                <table className="table table-dark table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Producto</th>
-                                            <th>Cantidad</th>
-                                            <th>Precio Unitario</th>
-                                            <th>Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {carrito.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{item.nombre}</td>
-                                                <td>{item.cantidad}</td>
-                                                <td>${item.precio}</td>
-                                                <td>${item.cantidad * item.precio}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
+                                {carrito.length > 0 ? (
+                                    <>
+                                        <table className="table table-dark table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Precio Unitario</th>
+                                                    <th>Subtotal</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {carrito.map(item => (
+                                                    <tr key={item.id}>
+                                                        <td>{item.nombre}</td>
+                                                        <td>{item.cantidad}</td>
+                                                        <td>${item.precio}</td>
+                                                        <td>${item.cantidad * item.precio}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
+                                    </>
+                                ) : (
+                                    <p className="text-center">No hay productos en el carrito.</p>
+                                )}
                             </div>
                         )}
-
                         {userType === 3 && datosMedico.length > 0 && (
                             <div>
                                 <h3 className="text-center">Datos del Médico</h3>
