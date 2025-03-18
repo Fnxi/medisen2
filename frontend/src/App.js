@@ -19,7 +19,8 @@ function App() {
     const [mostrarTienda, setMostrarTienda] = useState(false);
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
     const [cantidadSeleccionada, setCantidadSeleccionada] = useState({}); // Para manejar la cantidad seleccionada
-    const [datosMedico, setDatosMedico] = useState([]); 
+    const [datosMedico, setDatosMedico] = useState([]);
+    const [carrito, setCarrito] = useState([]); // Estado para el carrito
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
@@ -43,24 +44,41 @@ function App() {
     }, [isAuthenticated, userData]);
 
     // Obtener datos de Firebase para el médico (usuario tipo 3)
-    // Obtener datos de Firebase sin filtrar por el usuario
-useEffect(() => {
-    if (isAuthenticated && userData) {
-        // Obtener datos de Firebase para el médico (usuario tipo 3)
-        if (userType === 3) {
-            const medicionesRef = ref(database, 'Mediciones/'); // Cambia 'mediciones' por la ruta correcta en tu base de datos
-            onValue(medicionesRef, (snapshot) => {
-                const data = snapshot.val();
-                const datos = [];
-                for (let id in data) {
-                    datos.push(data[id]);
-                }
-                setDatosMedico(datos);
-            });
+    useEffect(() => {
+        if (isAuthenticated && userData) {
+            if (userType === 3) {
+                const medicionesRef = ref(database, 'Mediciones/');
+                onValue(medicionesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    const datos = [];
+                    for (let id in data) {
+                        datos.push(data[id]);
+                    }
+                    setDatosMedico(datos);
+                });
+            }
         }
-    }
-}, [isAuthenticated, userData, userType]);
+    }, [isAuthenticated, userData, userType]);
 
+    // Obtener el carrito del usuario
+    useEffect(() => {
+        if (isAuthenticated && userData) {
+            obtenerCarrito();
+        }
+    }, [isAuthenticated, userData]);
+
+    const obtenerCarrito = async () => {
+        try {
+            const response = await axios.get(`https://medisen2-pj7q.vercel.app/api/carrito/${userData.id}`);
+            if (response.data.success) {
+                setCarrito(response.data.carrito);
+            } else {
+                console.error("Error al obtener el carrito:", response.data.message);
+            }
+        } catch (error) {
+            console.error("Error al obtener el carrito:", error);
+        }
+    };
 
     const abrirFormulario = () => setMostrarFormulario(true);
     const cerrarFormulario = () => setMostrarFormulario(false);
@@ -70,7 +88,7 @@ useEffect(() => {
         setUserType(userDataFromResponse.user);
         setIsAuthenticated(true);
         cerrarFormulario();
-        localStorage.setItem("userData", JSON.stringify(userDataFromResponse));  // Guardamos los datos del usuario en localStorage
+        localStorage.setItem("userData", JSON.stringify(userDataFromResponse));
         if (userDataFromResponse.user === 1) {
             setMostrarBienvenida(true);
         }
@@ -102,7 +120,6 @@ useEffect(() => {
         setMostrarTienda(true);
     };
 
-    // Maneja la cantidad seleccionada para cada producto
     const handleCantidadChange = (id, cantidad) => {
         if (cantidad <= productos.find(producto => producto.id === id).cantidad) {
             setCantidadSeleccionada(prevState => ({
@@ -116,45 +133,42 @@ useEffect(() => {
         setIsAuthenticated(false);
         setUserData(null);
         setUserType(null);
-        localStorage.removeItem("userData");  // Limpiamos los datos del usuario
+        localStorage.removeItem("userData");
     };
 
     const handleComprar = async (productoId) => {
-    const cantidad = cantidadSeleccionada[productoId] || 1;
+        const cantidad = cantidadSeleccionada[productoId] || 1;
 
-    try {
-        const response = await axios.post("https://medisen2-pj7q.vercel.app/api/carrito", {
-            id_usuario: userData.id,
-            id_producto: productoId,
-            cantidad: cantidad,
-        });
+        try {
+            const response = await axios.post("https://medisen2-pj7q.vercel.app/api/carrito", {
+                id_usuario: userData.id,
+                id_producto: productoId,
+                cantidad: cantidad,
+            });
 
-        if (response.data.success) {
-            alert("Producto añadido al carrito");
-
-            // Actualizar la cantidad disponible del producto en el estado
-            setProductos(prevProductos =>
-                prevProductos.map(producto =>
-                    producto.id === productoId
-                        ? { ...producto, cantidad: producto.cantidad - cantidad }
-                        : producto
-                )
-            );
-        } else {
+            if (response.data.success) {
+                alert("Producto añadido al carrito");
+                obtenerCarrito(); // Actualizar el carrito
+                setProductos(prevProductos =>
+                    prevProductos.map(producto =>
+                        producto.id === productoId
+                            ? { ...producto, cantidad: producto.cantidad - cantidad }
+                            : producto
+                    )
+                );
+            } else {
+                alert("Error al añadir el producto al carrito");
+            }
+        } catch (error) {
+            console.error("Error al añadir producto al carrito:", error);
             alert("Error al añadir el producto al carrito");
         }
-    } catch (error) {
-        console.error("Error al añadir producto al carrito:", error);
-        alert("Error al añadir el producto al carrito");
-    }
-};
+    };
 
-    // Función para generar datos para la gráfica de médico
-      const generarDatosGraficoMedico = () => {
-        // Creamos los datos para la gráfica a partir de las mediciones
+    const generarDatosGraficoMedico = () => {
         return datosMedico.map((medicion, index) => ({
-            title: `Medición ${index + 1}`, // Nombre para la medición (opcional)
-            value: medicion.Promedio_Salud, // Usa el Promedio_Salud o el valor de la medición que quieras mostrar
+            title: `Medición ${index + 1}`,
+            value: medicion.Promedio_Salud,
             color: colores[index % colores.length]
         }));
     };
@@ -255,7 +269,7 @@ useEffect(() => {
                                                             onChange={(e) => handleCantidadChange(producto.id, e.target.value)}
                                                         />
                                                     </div>
-                                                   <button className="btn btn-success" onClick={() => handleComprar(producto.id)}>Comprar</button>
+                                                    <button className="btn btn-success" onClick={() => handleComprar(producto.id)}>Comprar</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -264,42 +278,68 @@ useEffect(() => {
                             </div>
                         )}
 
-                      {userType === 3 && datosMedico.length > 0 && (
-    <div>
-        <h3 className="text-center">Datos del Médico</h3>
-        <table className="table table-striped">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Frecuencia Cardíaca</th>
-                    <th>Humedad</th>
-                    <th>Presión</th>
-                    <th>Promedio Salud</th>
-                    <th>SpO2</th>
-                    <th>Temperatura Ambiente</th>
-                    <th>Temperatura Objeto</th>
-                </tr>
-            </thead>
-            <tbody>
-                {datosMedico.map((medicion, index) => (
-                    <tr key={index}>
-                        <td>{medicion.Fecha}</td>
-                        <td>{medicion.Hora}</td>
-                        <td>{medicion.Frecuencia_Cardiaca}</td>
-                        <td>{medicion.Humedad}</td>
-                        <td>{medicion.Presion}</td>
-                        <td>{medicion.Promedio_Salud}</td>
-                        <td>{medicion.SpO2}</td>
-                        <td>{medicion.Temperatura_Ambiente}</td>
-                        <td>{medicion.Temperatura_Objeto}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)}
+                        {userType === 1 && carrito.length > 0 && (
+                            <div>
+                                <h3 className="text-center">Carrito de Compras</h3>
+                                <table className="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio Unitario</th>
+                                            <th>Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {carrito.map(item => (
+                                            <tr key={item.id}>
+                                                <td>{item.nombre}</td>
+                                                <td>{item.cantidad}</td>
+                                                <td>${item.precio}</td>
+                                                <td>${item.cantidad * item.precio}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
+                            </div>
+                        )}
 
+                        {userType === 3 && datosMedico.length > 0 && (
+                            <div>
+                                <h3 className="text-center">Datos del Médico</h3>
+                                <table className="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Hora</th>
+                                            <th>Frecuencia Cardíaca</th>
+                                            <th>Humedad</th>
+                                            <th>Presión</th>
+                                            <th>Promedio Salud</th>
+                                            <th>SpO2</th>
+                                            <th>Temperatura Ambiente</th>
+                                            <th>Temperatura Objeto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {datosMedico.map((medicion, index) => (
+                                            <tr key={index}>
+                                                <td>{medicion.Fecha}</td>
+                                                <td>{medicion.Hora}</td>
+                                                <td>{medicion.Frecuencia_Cardiaca}</td>
+                                                <td>{medicion.Humedad}</td>
+                                                <td>{medicion.Presion}</td>
+                                                <td>{medicion.Promedio_Salud}</td>
+                                                <td>{medicion.SpO2}</td>
+                                                <td>{medicion.Temperatura_Ambiente}</td>
+                                                <td>{medicion.Temperatura_Objeto}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </>
                 )}
 
