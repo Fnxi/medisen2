@@ -268,42 +268,41 @@ function App() {
                             </div>
                         )}
 
-                      {userType === 3 && datosMedico.length > 0 && (
-    <div>
-        <h3 className="text-center">Datos del Médico</h3>
-        <table className="table table-striped">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Frecuencia Cardíaca</th>
-                    <th>Humedad</th>
-                    <th>Presión</th>
-                    <th>Promedio Salud</th>
-                    <th>SpO2</th>
-                    <th>Temperatura Ambiente</th>
-                    <th>Temperatura Objeto</th>
-                </tr>
-            </thead>
-            <tbody>
-                {datosMedico.map((medicion, index) => (
-                    <tr key={index}>
-                        <td>{medicion.Fecha}</td>
-                        <td>{medicion.Hora}</td>
-                        <td>{medicion.Frecuencia_Cardiaca}</td>
-                        <td>{medicion.Humedad}</td>
-                        <td>{medicion.Presion}</td>
-                        <td>{medicion.Promedio_Salud}</td>
-                        <td>{medicion.SpO2}</td>
-                        <td>{medicion.Temperatura_Ambiente}</td>
-                        <td>{medicion.Temperatura_Objeto}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)}
-
+                        {userType === 3 && datosMedico.length > 0 && (
+                            <div>
+                                <h3 className="text-center">Datos del Médico</h3>
+                                <table className="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Hora</th>
+                                            <th>Frecuencia Cardíaca</th>
+                                            <th>Humedad</th>
+                                            <th>Presión</th>
+                                            <th>Promedio Salud</th>
+                                            <th>SpO2</th>
+                                            <th>Temperatura Ambiente</th>
+                                            <th>Temperatura Objeto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {datosMedico.map((medicion, index) => (
+                                            <tr key={index}>
+                                                <td>{medicion.Fecha}</td>
+                                                <td>{medicion.Hora}</td>
+                                                <td>{medicion.Frecuencia_Cardiaca}</td>
+                                                <td>{medicion.Humedad}</td>
+                                                <td>{medicion.Presion}</td>
+                                                <td>{medicion.Promedio_Salud}</td>
+                                                <td>{medicion.SpO2}</td>
+                                                <td>{medicion.Temperatura_Ambiente}</td>
+                                                <td>{medicion.Temperatura_Objeto}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
