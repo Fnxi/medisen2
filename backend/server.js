@@ -123,5 +123,27 @@ app.delete("/api/productos/:id", (req, res) => {
     });
 });
 
+// Ruta para añadir un producto al carrito
+app.post("/api/carrito", (req, res) => {
+    const { id_usuario, id_producto, cantidad } = req.body;
+
+    // Validar que los datos estén presentes
+    if (!id_usuario || !id_producto || !cantidad) {
+        return res.status(400).json({ success: false, message: "Faltan datos requeridos" });
+    }
+
+    // Insertar en la tabla del carrito
+    const query = "INSERT INTO carrito (id_usuario, id_producto, cantidad) VALUES (?, ?, ?)";
+    const values = [id_usuario, id_producto, cantidad];
+
+    db.query(query, values, (err, result) => {
+        if (err) {
+            console.error("Error al añadir producto al carrito:", err);
+            return res.status(500).json({ success: false, message: "Error al añadir producto al carrito" });
+        }
+        res.status(201).json({ success: true, message: "Producto añadido al carrito" });
+    });
+});
+
 // Exportar la app para Vercel
 module.exports = app;
