@@ -166,7 +166,7 @@ app.get("/api/carrito/:id_usuario", (req, res) => {
     });
 });
 
-// Ruta para eliminar un producto del carrito
+// Ruta para eliminar un producto del carro
 app.delete("/api/carrito/:id", (req, res) => {
     const { id } = req.params;
 
