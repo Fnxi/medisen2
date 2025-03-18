@@ -145,5 +145,26 @@ app.post("/api/carrito", (req, res) => {
     });
 });
 
+// Ruta para obtener los productos del carrito de un usuario
+app.get("/api/carrito/:id_usuario", (req, res) => {
+    const { id_usuario } = req.params;
+
+    // Consulta para obtener los productos del carrito con detalles del producto
+    const query = `
+        SELECT carrito.id, carrito.cantidad, productos.nombre, productos.precio
+        FROM carrito
+        JOIN productos ON carrito.id_producto = productos.id
+        WHERE carrito.id_usuario = ?
+    `;
+
+    db.query(query, [id_usuario], (err, result) => {
+        if (err) {
+            console.error("Error al obtener el carrito:", err);
+            return res.status(500).json({ success: false, message: "Error al obtener el carrito" });
+        }
+        res.status(200).json({ success: true, carrito: result });
+    });
+});
+
 // Exportar la app para Vercel
 module.exports = app;
