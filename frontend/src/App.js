@@ -18,12 +18,12 @@ function App() {
     const [userType, setUserType] = useState(null);
     const [mostrarTienda, setMostrarTienda] = useState(false);
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
-    const [cantidadSeleccionada, setCantidadSeleccionada] = useState({}); // Para manejar la cantidad seleccionada
-    const [datosMedico, setDatosMedico] = useState([]); 
+    const [cantidadSeleccionada, setCantidadSeleccionada] = useState({});
+    const [datosMedico, setDatosMedico] = useState([]);
+    const [carrito, setCarrito] = useState([]);  // Para manejar el carrito
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
-    // Recuperar los datos de la sesión desde localStorage al cargar la página
     useEffect(() => {
         const storedUserData = localStorage.getItem("userData");
         if (storedUserData) {
@@ -42,25 +42,21 @@ function App() {
         }
     }, [isAuthenticated, userData]);
 
-    // Obtener datos de Firebase para el médico (usuario tipo 3)
-    // Obtener datos de Firebase sin filtrar por el usuario
-useEffect(() => {
-    if (isAuthenticated && userData) {
-        // Obtener datos de Firebase para el médico (usuario tipo 3)
-        if (userType === 3) {
-            const medicionesRef = ref(database, 'Mediciones/'); // Cambia 'mediciones' por la ruta correcta en tu base de datos
-            onValue(medicionesRef, (snapshot) => {
-                const data = snapshot.val();
-                const datos = [];
-                for (let id in data) {
-                    datos.push(data[id]);
-                }
-                setDatosMedico(datos);
-            });
+    useEffect(() => {
+        if (isAuthenticated && userData) {
+            if (userType === 3) {
+                const medicionesRef = ref(database, 'Mediciones/');
+                onValue(medicionesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    const datos = [];
+                    for (let id in data) {
+                        datos.push(data[id]);
+                    }
+                    setDatosMedico(datos);
+                });
+            }
         }
-    }
-}, [isAuthenticated, userData, userType]);
-
+    }, [isAuthenticated, userData, userType]);
 
     const abrirFormulario = () => setMostrarFormulario(true);
     const cerrarFormulario = () => setMostrarFormulario(false);
@@ -70,7 +66,7 @@ useEffect(() => {
         setUserType(userDataFromResponse.user);
         setIsAuthenticated(true);
         cerrarFormulario();
-        localStorage.setItem("userData", JSON.stringify(userDataFromResponse));  // Guardamos los datos del usuario en localStorage
+        localStorage.setItem("userData", JSON.stringify(userDataFromResponse));
         if (userDataFromResponse.user === 1) {
             setMostrarBienvenida(true);
         }
@@ -102,7 +98,6 @@ useEffect(() => {
         setMostrarTienda(true);
     };
 
-    // Maneja la cantidad seleccionada para cada producto
     const handleCantidadChange = (id, cantidad) => {
         if (cantidad <= productos.find(producto => producto.id === id).cantidad) {
             setCantidadSeleccionada(prevState => ({
@@ -116,17 +111,27 @@ useEffect(() => {
         setIsAuthenticated(false);
         setUserData(null);
         setUserType(null);
-        localStorage.removeItem("userData");  // Limpiamos los datos del usuario
+        localStorage.removeItem("userData");
     };
 
-    // Función para generar datos para la gráfica de médico
-      const generarDatosGraficoMedico = () => {
-        // Creamos los datos para la gráfica a partir de las mediciones
-        return datosMedico.map((medicion, index) => ({
-            title: `Medición ${index + 1}`, // Nombre para la medición (opcional)
-            value: medicion.Promedio_Salud, // Usa el Promedio_Salud o el valor de la medición que quieras mostrar
-            color: colores[index % colores.length]
-        }));
+    const handleAgregarAlCarrito = (producto, cantidad) => {
+        const productoEnCarrito = carrito.find(item => item.id === producto.id);
+        if (productoEnCarrito) {
+            productoEnCarrito.cantidad += cantidad; // Si ya existe, se suma la cantidad
+            setCarrito([...carrito]);
+        } else {
+            setCarrito([...carrito, { ...producto, cantidad }]); // Si no existe, se agrega al carrito
+        }
+    };
+
+    const handleEliminarDelCarrito = (id) => {
+        setCarrito(carrito.filter(item => item.id !== id));
+    };
+
+    const handleCompra = () => {
+        // Aquí puedes integrar la lógica para manejar el pago o guardar la compra en la base de datos.
+        console.log("Carrito de compras:", carrito);
+        setCarrito([]); // Limpiar carrito después de la compra
     };
 
     return (
@@ -142,6 +147,9 @@ useEffect(() => {
                             <li className="nav-item"><a className="nav-link text-white" href="#" onClick={() => { setMostrarBienvenida(true); setMostrarTienda(false); }}>Inicio</a></li>
                             {userType === 1 && (
                                 <li className="nav-item"><a className="nav-link text-white" href="#" onClick={handleIrATienda}>Tienda</a></li>
+                            )}
+                            {userType === 3 && (
+                                <li className="nav-item"><a className="nav-link text-white" href="#">Datos Médicos</a></li>
                             )}
                         </ul>
                         {!isAuthenticated ? (
@@ -225,12 +233,38 @@ useEffect(() => {
                                                             onChange={(e) => handleCantidadChange(producto.id, e.target.value)}
                                                         />
                                                     </div>
-                                                    <button className="btn btn-success">Comprar</button>
+                                                    <button
+                                                        className="btn btn-primary"
+                                                        onClick={() => handleAgregarAlCarrito(producto, cantidadSeleccionada[producto.id] || 1)}
+                                                    >
+                                                        Añadir al carrito
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
+                                <h3 className="text-center">Carrito de Compras</h3>
+                                <div className="row">
+                                    {carrito.map(item => (
+                                        <div className="col-md-4 mb-4" key={item.id}>
+                                            <div className="card h-100">
+                                                <div className="card-body">
+                                                    <h5 className="card-title">{item.nombre}</h5>
+                                                    <p className="card-text"><strong>Precio:</strong> ${item.precio}</p>
+                                                    <p className="card-text"><strong>Cantidad:</strong> {item.cantidad}</p>
+                                                    <button
+                                                        className="btn btn-danger"
+                                                        onClick={() => handleEliminarDelCarrito(item.id)}
+                                                    >
+                                                        Eliminar del carrito
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button className="btn btn-success" onClick={handleCompra}>Comprar</button>
                             </div>
                         )}
 
@@ -271,16 +305,6 @@ useEffect(() => {
 )}
 
                     </>
-                )}
-
-                {!isAuthenticated && mostrarFormulario && (
-                    <Formulario onLoginSuccess={handleLoginSuccess} />
-                )}
-
-                {!isAuthenticated && !mostrarFormulario && (
-                    <div className="text-center">
-                        <p>Por favor, inicia sesión para acceder al contenido.</p>
-                    </div>
                 )}
             </div>
         </div>
