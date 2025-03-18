@@ -119,6 +119,36 @@ useEffect(() => {
         localStorage.removeItem("userData");  // Limpiamos los datos del usuario
     };
 
+    const handleComprar = async (productoId) => {
+    const cantidad = cantidadSeleccionada[productoId] || 1;
+
+    try {
+        const response = await axios.post("https://medisen2-pj7q.vercel.app/api/carrito", {
+            id_usuario: userData.id,
+            id_producto: productoId,
+            cantidad: cantidad,
+        });
+
+        if (response.data.success) {
+            alert("Producto añadido al carrito");
+
+            // Actualizar la cantidad disponible del producto en el estado
+            setProductos(prevProductos =>
+                prevProductos.map(producto =>
+                    producto.id === productoId
+                        ? { ...producto, cantidad: producto.cantidad - cantidad }
+                        : producto
+                )
+            );
+        } else {
+            alert("Error al añadir el producto al carrito");
+        }
+    } catch (error) {
+        console.error("Error al añadir producto al carrito:", error);
+        alert("Error al añadir el producto al carrito");
+    }
+};
+
     // Función para generar datos para la gráfica de médico
       const generarDatosGraficoMedico = () => {
         // Creamos los datos para la gráfica a partir de las mediciones
@@ -225,7 +255,7 @@ useEffect(() => {
                                                             onChange={(e) => handleCantidadChange(producto.id, e.target.value)}
                                                         />
                                                     </div>
-                                                    <button className="btn btn-success">Comprar</button>
+                                                   <button className="btn btn-success" onClick={() => handleComprar(producto.id)}>Comprar</button>
                                                 </div>
                                             </div>
                                         </div>
