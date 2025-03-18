@@ -166,5 +166,19 @@ app.get("/api/carrito/:id_usuario", (req, res) => {
     });
 });
 
+// Ruta para eliminar un producto del carrito
+app.delete("/api/carrito/:id", (req, res) => {
+    const { id } = req.params;
+
+    const query = "DELETE FROM carrito WHERE id = ?";
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error("Error al eliminar producto del carrito:", err);
+            return res.status(500).json({ success: false, message: "Error al eliminar producto del carrito" });
+        }
+        res.status(200).json({ success: true, message: "Producto eliminado del carrito" });
+    });
+});
+
 // Exportar la app para Vercel
 module.exports = app;
