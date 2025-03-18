@@ -108,6 +108,21 @@ function App() {
             .catch(error => console.error("Error dando de baja el producto:", error));
     };
 
+    const handleEliminarDelCarrito = async (id) => {
+    try {
+        const response = await axios.delete(`https://medisen2-pj7q.vercel.app/api/carrito/${id}`);
+        if (response.data.success) {
+            alert("Producto eliminado del carrito");
+            obtenerCarrito(); // Actualizar el carrito
+        } else {
+            alert("Error al eliminar el producto del carrito");
+        }
+    } catch (error) {
+        console.error("Error al eliminar producto del carrito:", error);
+        alert("Error al eliminar el producto del carrito");
+    }
+};
+
     const generarDatosGrafico = () => {
         return productos.map((producto, index) => ({
             title: producto.nombre,
@@ -289,38 +304,47 @@ function App() {
                             </div>
                         )}
 
-                        {userType === 1 && mostrarCarrito && (
-                            <div>
-                                <h3 className="text-center">Carrito de Compras</h3>
-                                {carrito.length > 0 ? (
-                                    <>
-                                        <table className="table table-dark table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Producto</th>
-                                                    <th>Cantidad</th>
-                                                    <th>Precio Unitario</th>
-                                                    <th>Subtotal</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {carrito.map(item => (
-                                                    <tr key={item.id}>
-                                                        <td>{item.nombre}</td>
-                                                        <td>{item.cantidad}</td>
-                                                        <td>${item.precio}</td>
-                                                        <td>${item.cantidad * item.precio}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
-                                    </>
-                                ) : (
-                                    <p className="text-center">No hay productos en el carrito.</p>
-                                )}
-                            </div>
-                        )}
+                       {userType === 1 && mostrarCarrito && (
+    <div>
+        <h3 className="text-center">Carrito de Compras</h3>
+        {carrito.length > 0 ? (
+            <>
+                <table className="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {carrito.map(item => (
+                            <tr key={item.id}>
+                                <td>{item.nombre}</td>
+                                <td>{item.cantidad}</td>
+                                <td>${item.precio}</td>
+                                <td>${item.cantidad * item.precio}</td>
+                                <td>
+                                    <button
+                                        className="btn btn-danger"
+                                        onClick={() => handleEliminarDelCarrito(item.id)}
+                                    >
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
+            </>
+        ) : (
+            <p className="text-center">No hay productos en el carrito.</p>
+        )}
+    </div>
+)}
                         {userType === 3 && datosMedico.length > 0 && (
                             <div>
                                 <h3 className="text-center">Datos del Médico</h3>
