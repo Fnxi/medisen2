@@ -25,7 +25,7 @@ const PayPalButton = ({ total, carrito, userData }) => {
                         // Datos que queremos guardar en la base de datos
                        const compraData = {
     id_usuario: userData.id,
-    nombre_usuario: userData.nombre, // Asegúrate de que userData tenga este campo
+    nombre_usuario: userData.name, // Asegúrate de que userData tenga este campo
     total: total,
     detalles: JSON.stringify(carrito) // Guardamos los detalles del carrito como JSON
 };
