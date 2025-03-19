@@ -180,5 +180,22 @@ app.delete("/api/carrito/:id", (req, res) => {
     });
 });
 
+app.post("/api/guardar-compra", async (req, res) => {
+    const { id_usuario, nombre_usuario, total, detalles } = req.body;
+
+    try {
+        const query = `
+            INSERT INTO compras (id_usuario, nombre_usuario, total, detalles)
+            VALUES (?, ?, ?, ?)
+        `;
+        await db.execute(query, [id_usuario, nombre_usuario, total, detalles]);
+
+        res.json({ success: true, message: "Compra registrada correctamente." });
+    } catch (error) {
+        console.error("Error al guardar la compra:", error);
+        res.status(500).json({ success: false, message: "Error al registrar la compra." });
+    }
+});
+
 // Exportar la app para Vercel
 module.exports = app;
