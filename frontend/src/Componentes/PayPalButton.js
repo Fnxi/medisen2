@@ -23,27 +23,27 @@ const PayPalButton = ({ total, carrito, userData }) => {
                 onApprove: function (data, actions) {
                     return actions.order.capture().then(function (details) {
                         // Datos que queremos guardar en la base de datos
-                        const compraData = {
-                            id_usuario: userData.id,
-                            nombre_usuario: userData.nombre, // Asegúrate de que userData tenga este campo
-                            total: total,
-                            detalles: JSON.stringify(carrito) // Guardamos los detalles del carrito como JSON
-                        };
+                       const compraData = {
+    id_usuario: userData.id,
+    nombre_usuario: userData.nombre, // Asegúrate de que userData tenga este campo
+    total: total,
+    detalles: JSON.stringify(carrito) // Guardamos los detalles del carrito como JSON
+};
 
-                        // Enviar los datos al backend para guardar en la base de datos
-                        axios.post("https://medisen2-pj7q.vercel.app/api/guardar-compra", compraData)
-                            .then(response => {
-                                if (response.data.success) {
-                                    alert("Pago completado y compra registrada.");
-                                    // Aquí puedes redirigir al usuario o mostrar un mensaje de éxito
-                                } else {
-                                    alert("Error al registrar la compra.");
-                                }
-                            })
-                            .catch(error => {
-                                console.error("Error al guardar la compra:", error);
-                                alert("Error al registrar la compra.");
-                            });
+console.log("Datos enviados al backend:", compraData);
+
+axios.post("https://medisen2-pj7q.vercel.app/api/guardar-compra", compraData)
+    .then(response => {
+        if (response.data.success) {
+            alert("Pago completado y compra registrada.");
+        } else {
+            alert("Error al registrar la compra.");
+        }
+    })
+    .catch(error => {
+        console.error("Error al guardar la compra:", error);
+        alert("Error al registrar la compra.");
+    });
                     });
                 }
             }).render("#paypal-button-container");
