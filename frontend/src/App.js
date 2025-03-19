@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Formulario from "./Componentes/Form";
 import FormProducto from "./Componentes/FormProducto";
+import PayPalButton from "./Componentes/PayPalButton";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -339,6 +340,7 @@ function App() {
                     </tbody>
                 </table>
                 <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
+                        <PayPalButton total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)} />
             </>
         ) : (
             <p className="text-center">No hay productos en el carrito.</p>
