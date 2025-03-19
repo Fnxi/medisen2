@@ -340,7 +340,11 @@ function App() {
                     </tbody>
                 </table>
                 <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
-                        <PayPalButton total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)} />
+                         <PayPalButton
+                    total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}
+                    carrito={carrito}
+                    userData={userData}
+                />
             </>
         ) : (
             <p className="text-center">No hay productos en el carrito.</p>
