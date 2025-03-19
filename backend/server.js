@@ -180,21 +180,29 @@ app.delete("/api/carrito/:id", (req, res) => {
     });
 });
 
-app.post("/api/guardar-compra", async (req, res) => {
+app.post("/api/guardar-compra", (req, res) => {
     const { id_usuario, nombre_usuario, total, detalles } = req.body;
 
-    try {
-        const query = `
-            INSERT INTO compras (id_usuario, nombre_usuario, total, detalles)
-            VALUES (?, ?, ?, ?)
-        `;
-        await db.execute(query, [id_usuario, nombre_usuario, total, detalles]);
+    // Validar que los datos estén presentes
+    if (!id_usuario || !nombre_usuario || !total || !detalles) {
+        return res.status(400).json({ success: false, message: "Faltan datos requeridos" });
+    }
+
+    // Insertar en la tabla compras
+    const query = `
+        INSERT INTO compras (id_usuario, nombre_usuario, total, detalles)
+        VALUES (?, ?, ?, ?)
+    `;
+    const values = [id_usuario, nombre_usuario, total, detalles];
+
+    db.query(query, values, (err, result) => {
+        if (err) {
+            console.error("Error al guardar la compra:", err);
+            return res.status(500).json({ success: false, message: "Error al registrar la compra" });
+        }
 
         res.json({ success: true, message: "Compra registrada correctamente." });
-    } catch (error) {
-        console.error("Error al guardar la compra:", error);
-        res.status(500).json({ success: false, message: "Error al registrar la compra." });
-    }
+    });
 });
 
 // Exportar la app para Vercel
