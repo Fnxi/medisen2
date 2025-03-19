@@ -217,12 +217,18 @@ function App() {
                         </ul>
                         {!isAuthenticated ? (
                             <button className="btn btn-primary" onClick={abrirFormulario}>Iniciar Sesión</button>
-                        ) : (
-                            <ul className="navbar-nav">
-                                <li className="nav-item"><a className="nav-link" href="#">Perfil</a></li>
-                                <li className="nav-item"><button className="btn btn-danger" onClick={handleLogout}>Cerrar Sesión</button></li>
-                            </ul>
-                        )}
+                        ) :(
+                <ul className="navbar-nav">
+                    {userType === 1 && ( // Mostrar "Perfil" solo para el user 1
+                        <li className="nav-item">
+                            <a className="nav-link" href="#" onClick={() => { setMostrarPerfil(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarBienvenida(false); }}>Perfil</a>
+                        </li>
+                    )}
+                    <li className="nav-item">
+                        <button className="btn btn-danger" onClick={handleLogout}>Cerrar Sesión</button>
+                    </li>
+                </ul>
+            )}
                     </div>
                 </div>
             </nav>
