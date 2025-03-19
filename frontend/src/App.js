@@ -3,6 +3,7 @@ import axios from "axios";
 import Formulario from "./Componentes/Form";
 import FormProducto from "./Componentes/FormProducto";
 import PayPalButton from "./Componentes/PayPalButton";
+import Perfil from "./Componentes/Perfil";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -22,7 +23,8 @@ function App() {
     const [cantidadSeleccionada, setCantidadSeleccionada] = useState({});
     const [datosMedico, setDatosMedico] = useState([]);
     const [carrito, setCarrito] = useState([]);
-    const [mostrarCarrito, setMostrarCarrito] = useState(false); // Estado para mostrar/ocultar el carrito
+    const [mostrarCarrito, setMostrarCarrito] = useState(false);
+    const [mostrarPerfil, setMostrarPerfil] = useState(false); // Estado para mostrar/ocultar el perfil
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
@@ -110,19 +112,19 @@ function App() {
     };
 
     const handleEliminarDelCarrito = async (id) => {
-    try {
-        const response = await axios.delete(`https://medisen2-pj7q.vercel.app/api/carrito/${id}`);
-        if (response.data.success) {
-            alert("Producto eliminado del carrito");
-            obtenerCarrito(); // Actualizar el carrito
-        } else {
+        try {
+            const response = await axios.delete(`https://medisen2-pj7q.vercel.app/api/carrito/${id}`);
+            if (response.data.success) {
+                alert("Producto eliminado del carrito");
+                obtenerCarrito(); // Actualizar el carrito
+            } else {
+                alert("Error al eliminar el producto del carrito");
+            }
+        } catch (error) {
+            console.error("Error al eliminar producto del carrito:", error);
             alert("Error al eliminar el producto del carrito");
         }
-    } catch (error) {
-        console.error("Error al eliminar producto del carrito:", error);
-        alert("Error al eliminar el producto del carrito");
-    }
-};
+    };
 
     const generarDatosGrafico = () => {
         return productos.map((producto, index) => ({
@@ -202,33 +204,33 @@ function App() {
                     <div className="collapse navbar-collapse" id="navbarNav">
                         <ul className="navbar-nav me-auto">
                             <li className="nav-item">
-                                <a className="nav-link text-white" href="#" onClick={() => { setMostrarBienvenida(true); setMostrarTienda(false); setMostrarCarrito(false); }}>Inicio</a>
+                                <a className="nav-link text-white" href="#" onClick={() => { setMostrarBienvenida(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarPerfil(false); }}>Inicio</a>
                             </li>
                             {userType === 1 && (
                                 <>
                                     <li className="nav-item">
-                                        <a className="nav-link text-white" href="#" onClick={handleIrATienda}>Tienda</a>
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarTienda(true); setMostrarCarrito(false); setMostrarBienvenida(false); setMostrarPerfil(false); }}>Tienda</a>
                                     </li>
                                     <li className="nav-item">
-                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarCarrito(true); setMostrarTienda(false); setMostrarBienvenida(false); }}>Carrito</a>
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarCarrito(true); setMostrarTienda(false); setMostrarBienvenida(false); setMostrarPerfil(false); }}>Carrito</a>
                                     </li>
                                 </>
                             )}
                         </ul>
                         {!isAuthenticated ? (
                             <button className="btn btn-primary" onClick={abrirFormulario}>Iniciar Sesión</button>
-                        ) :(
-                <ul className="navbar-nav">
-                    {userType === 1 && ( // Mostrar "Perfil" solo para el user 1
-                        <li className="nav-item">
-                            <a className="nav-link" href="#" onClick={() => { setMostrarPerfil(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarBienvenida(false); }}>Perfil</a>
-                        </li>
-                    )}
-                    <li className="nav-item">
-                        <button className="btn btn-danger" onClick={handleLogout}>Cerrar Sesión</button>
-                    </li>
-                </ul>
-            )}
+                        ) : (
+                            <ul className="navbar-nav">
+                                {userType === 1 && ( // Mostrar "Perfil" solo para el user 1
+                                    <li className="nav-item">
+                                        <a className="nav-link" href="#" onClick={() => { setMostrarPerfil(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarBienvenida(false); }}>Perfil</a>
+                                    </li>
+                                )}
+                                <li className="nav-item">
+                                    <button className="btn btn-danger" onClick={handleLogout}>Cerrar Sesión</button>
+                                </li>
+                            </ul>
+                        )}
                     </div>
                 </div>
             </nav>
@@ -311,52 +313,57 @@ function App() {
                             </div>
                         )}
 
-                       {userType === 1 && mostrarCarrito && (
-    <div>
-        <h3 className="text-center">Carrito de Compras</h3>
-        {carrito.length > 0 ? (
-            <>
-                <table className="table table-dark table-hover">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio Unitario</th>
-                            <th>Subtotal</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {carrito.map(item => (
-                            <tr key={item.id}>
-                                <td>{item.nombre}</td>
-                                <td>{item.cantidad}</td>
-                                <td>${item.precio}</td>
-                                <td>${item.cantidad * item.precio}</td>
-                                <td>
-                                    <button
-                                        className="btn btn-danger"
-                                        onClick={() => handleEliminarDelCarrito(item.id)}
-                                    >
-                                        Eliminar
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
-                         <PayPalButton
-                    total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}
-                    carrito={carrito}
-                    userData={userData}
-                />
-            </>
-        ) : (
-            <p className="text-center">No hay productos en el carrito.</p>
-        )}
-    </div>
-)}
+                        {userType === 1 && mostrarCarrito && (
+                            <div>
+                                <h3 className="text-center">Carrito de Compras</h3>
+                                {carrito.length > 0 ? (
+                                    <>
+                                        <table className="table table-dark table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th>Cantidad</th>
+                                                    <th>Precio Unitario</th>
+                                                    <th>Subtotal</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {carrito.map(item => (
+                                                    <tr key={item.id}>
+                                                        <td>{item.nombre}</td>
+                                                        <td>{item.cantidad}</td>
+                                                        <td>${item.precio}</td>
+                                                        <td>${item.cantidad * item.precio}</td>
+                                                        <td>
+                                                            <button
+                                                                className="btn btn-danger"
+                                                                onClick={() => handleEliminarDelCarrito(item.id)}
+                                                            >
+                                                                Eliminar
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
+                                        <PayPalButton
+                                            total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}
+                                            carrito={carrito}
+                                            userData={userData}
+                                        />
+                                    </>
+                                ) : (
+                                    <p className="text-center">No hay productos en el carrito.</p>
+                                )}
+                            </div>
+                        )}
+
+                        {userType === 1 && mostrarPerfil && (
+                            <Perfil userData={userData} />
+                        )}
+
                         {userType === 3 && datosMedico.length > 0 && (
                             <div>
                                 <h3 className="text-center">Datos del Médico</h3>
