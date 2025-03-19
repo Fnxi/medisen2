@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 const PayPalButton = ({ total }) => {
     useEffect(() => {
         const script = document.createElement("script");
-        script.src = `https://www.paypal.com/sdk/js?client-id=AePHBK6BCla72PG3DFdwTKa7qBNpFm8UwGG6tymRWLlUcShUZmAqpNMeB5S_ejl7HAALojtNHd4U834_&currency=USD`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=AePHBK6BCla72PG3DFdwTKa7qBNpFm8UwGG6tymRWLlUcShUZmAqpNMeB5S_ejl7HAALojtNHd4U834_&currency=MXN`; // Cambia a MXN
         script.async = true;
         document.body.appendChild(script);
 
@@ -13,7 +13,8 @@ const PayPalButton = ({ total }) => {
                     return actions.order.create({
                         purchase_units: [{
                             amount: {
-                                value: total
+                                value: total,
+                                currency_code: "MXN" // Especifica la moneda como MXN
                             }
                         }]
                     });
