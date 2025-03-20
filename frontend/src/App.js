@@ -253,7 +253,7 @@ function App() {
             <div className="container mt-4">
                 {isAuthenticated && userData && (
                     <>
-                    {userType === 2 && mostrarDashboard && (
+                {userType === 2 && mostrarDashboard && (
     <>
         <h3 className="text-center">Dashboard del Administrador</h3>
         <div className="row">
@@ -284,22 +284,25 @@ function App() {
         </div>
         <div className="row mt-4">
             <div className="col-md-6">
-                <h4>Gráfico de Ventas</h4>
-                {/* Usamos el nuevo BarChart con react-chartjs-2 */}
-                <BarChart
-                    data={ventas.map((venta, index) => ({
-                        title: `Venta ${index + 1}`,
-                        value: venta.total,
-                        color: colores[index % colores.length],
-                    }))}
-                />
-            </div>
-            <div className="col-md-6">
                 <h4>Gráfico de Productos</h4>
                 <PieChart
                     data={generarDatosGrafico()}
                     style={{ height: "300px" }}
                 />
+            </div>
+            <div className="col-md-6">
+                <h4>Resumen de Ventas</h4>
+                <div className="card">
+                    <div className="card-body">
+                        <p className="card-text">
+                            Total de ventas realizadas: {ventas.length}
+                        </p>
+                        <p className="card-text">
+                            Ingresos totales: $
+                            {ventas.reduce((total, venta) => total + venta.total, 0)}
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
         <div className="row mt-4">
@@ -332,7 +335,6 @@ function App() {
         </div>
     </>
 )}
-
                         {userType === 1 && mostrarBienvenida && (
                             <div>
                                 <h3 className="text-center">Bienvenido Usuario</h3>
