@@ -1,9 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import jsPDF from "jspdf";
 
 const Perfil = ({ userData }) => {
     const [editar, setEditar] = useState(false); // Estado para controlar el modo de edición
     const [datosUsuario, setDatosUsuario] = useState(userData); // Estado para los datos editables
+    const [compras, setCompras] = useState([]); // Estado para almacenar las compras del usuario
+
+    // Obtener las compras del usuario al cargar el componente
+    useEffect(() => {
+        const obtenerCompras = async () => {
+            try {
+                const response = await axios.get(
+                    `https://medisen2-pj7q.vercel.app/api/compras/${userData.id}`
+                );
+                if (response.data.success) {
+                    setCompras(response.data.compras);
+                } else {
+                    console.error("Error al obtener las compras:", response.data.message);
+                }
+            } catch (error) {
+                console.error("Error al obtener las compras:", error);
+            }
+        };
+
+        obtenerCompras();
+    }, [userData.id]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -29,6 +51,49 @@ const Perfil = ({ userData }) => {
             console.error("Error al actualizar los datos:", error);
             alert("Error al actualizar los datos.");
         }
+    };
+
+    const handleGenerarFactura = (compra) => {
+        // Pedir datos fiscales al usuario
+        const nombreFiscal = prompt("Ingrese su nombre fiscal:");
+        const rfc = prompt("Ingrese su RFC:");
+        const direccionFiscal = prompt("Ingrese su dirección fiscal:");
+
+        if (!nombreFiscal || !rfc || !direccionFiscal) {
+            alert("Todos los datos fiscales son requeridos.");
+            return;
+        }
+
+        // Crear el PDF
+        const doc = new jsPDF();
+
+        // Encabezado de la factura
+        doc.setFontSize(18);
+        doc.text("Factura", 10, 10);
+        doc.setFontSize(12);
+        doc.text(`Número de compra: ${compra.id}`, 10, 20);
+        doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
+
+        // Datos fiscales
+        doc.text("Datos Fiscales:", 10, 40);
+        doc.text(`Nombre: ${nombreFiscal}`, 10, 50);
+        doc.text(`RFC: ${rfc}`, 10, 60);
+        doc.text(`Dirección: ${direccionFiscal}`, 10, 70);
+
+        // Detalles de la compra
+        doc.text("Detalles de la compra:", 10, 80);
+        const detalles = JSON.parse(compra.detalles);
+        let y = 90;
+        detalles.forEach((item, index) => {
+            doc.text(`${index + 1}. ${item.nombre} - Cantidad: ${item.cantidad} - Precio: $${item.precio}`, 10, y);
+            y += 10;
+        });
+
+        // Total
+        doc.text(`Total: $${compra.total}`, 10, y + 10);
+
+        // Guardar el PDF
+        doc.save(`factura_${compra.id}.pdf`);
     };
 
     return (
@@ -139,6 +204,38 @@ const Perfil = ({ userData }) => {
                         </>
                     )}
                 </div>
+            </div>
+
+            {/* Tabla de compras */}
+            <div className="mt-4">
+                <h4 className="text-center">Mis Compras</h4>
+                <table className="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID Compra</th>
+                            <th>Total</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {compras.map((compra) => (
+                            <tr key={compra.id}>
+                                <td>{compra.id}</td>
+                                <td>${compra.total}</td>
+                                <td>{new Date(compra.fecha_compra).toLocaleDateString()}</td>
+                                <td>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={() => handleGenerarFactura(compra)}
+                                    >
+                                        Generar Factura
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
