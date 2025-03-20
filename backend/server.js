@@ -205,5 +205,32 @@ app.post("/api/guardar-compra", (req, res) => {
     });
 });
 
+// Ruta para actualizar un usuario
+app.put("/api/usuarios/:id", (req, res) => {
+    const { id } = req.params;
+    const { name, age, email, birthDate, birthPlace, gender, civilStatus } = req.body;
+
+    // Validar que los datos estén presentes
+    if (!name || !age || !email || !birthDate || !birthPlace || !gender || !civilStatus) {
+        return res.status(400).json({ success: false, message: "Faltan datos requeridos" });
+    }
+
+    const query = `
+        UPDATE usuarios
+        SET name = ?, age = ?, email = ?, birthDate = ?, birthPlace = ?, gender = ?, civilStatus = ?
+        WHERE id = ?
+    `;
+    const values = [name, age, email, birthDate, birthPlace, gender, civilStatus, id];
+
+    db.query(query, values, (err, result) => {
+        if (err) {
+            console.error("Error al actualizar el usuario:", err);
+            return res.status(500).json({ success: false, message: "Error al actualizar el usuario" });
+        }
+
+        res.json({ success: true, message: "Usuario actualizado correctamente." });
+    });
+});
+
 // Exportar la app para Vercel
 module.exports = app;
