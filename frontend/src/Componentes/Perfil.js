@@ -115,14 +115,15 @@ const handleGenerarFactura = (compra) => {
     });
 
     // Calcular subtotal, IVA y total
-    const subtotal = compra.total / 1.16;
-    const iva = compra.total - subtotal;
+    const total = parseFloat(compra.total); // Convertir total a número
+    const subtotal = total / 1.16;
+    const iva = total - subtotal;
 
     // Mostrar subtotal, IVA y total
     doc.setFontSize(12);
     doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, y + 10);
     doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
-    doc.text(`Total: $${compra.total.toFixed(2)}`, 10, y + 30);
+    doc.text(`Total: $${total.toFixed(2)}`, 10, y + 30);
 
     // Abrir el PDF en una nueva ventana
     doc.output("dataurlnewwindow");
