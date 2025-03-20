@@ -3,18 +3,18 @@ import axios from "axios";
 import jsPDF from "jspdf";
 
 const Perfil = ({ userData }) => {
-    const [editar, setEditar] = useState(false); // Estado para controlar el modo de edición
-    const [datosUsuario, setDatosUsuario] = useState(userData); // Estado para los datos del usuario
-    const [compras, setCompras] = useState([]); // Estado para almacenar las compras
-    const [modalVisible, setModalVisible] = useState(false); // Estado para controlar la visibilidad del modal
+    const [editar, setEditar] = useState(false);
+    const [datosUsuario, setDatosUsuario] = useState(userData);
+    const [compras, setCompras] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
     const [datosFiscales, setDatosFiscales] = useState({
         nombreFiscal: "",
         rfc: "",
         direccionFiscal: "",
-    }); // Estado para los datos fiscales
-    const [compraSeleccionada, setCompraSeleccionada] = useState(null); // Estado para la compra seleccionada
+    });
+    const [compraSeleccionada, setCompraSeleccionada] = useState(null);
 
-    // Obtener las compras del usuario al cargar el componente
+    // Obtener las compras del usuario
     useEffect(() => {
         const obtenerCompras = async () => {
             try {
@@ -52,7 +52,7 @@ const Perfil = ({ userData }) => {
             );
             if (response.data.success) {
                 alert("Datos actualizados correctamente.");
-                setEditar(false); // Salir del modo de edición
+                setEditar(false);
             } else {
                 alert("Error al actualizar los datos.");
             }
@@ -121,8 +121,8 @@ const Perfil = ({ userData }) => {
         doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
         doc.text(`Total: $${compra.total.toFixed(2)}`, 10, y + 30);
 
-        // Guardar el PDF
-        doc.save(`factura_${compra.id}.pdf`);
+        // Abrir el PDF en una nueva ventana
+        doc.output("dataurlnewwindow");
     };
 
     return (
