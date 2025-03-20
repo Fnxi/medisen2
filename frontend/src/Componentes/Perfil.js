@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
 
 const Perfil = ({ userData }) => {
     const [editar, setEditar] = useState(false);
@@ -59,46 +58,62 @@ const Perfil = ({ userData }) => {
         }
     };
 
-    const handleGenerarFactura = (compra) => {
-        const doc = new jsPDF();
+const handleGenerarFactura = (compra) => {
+    const doc = new jsPDF();
 
-        doc.setFontSize(18);
-        doc.text("Factura", 10, 10);
-        doc.setFontSize(12);
-        doc.text(`Número de compra: ${compra.id}`, 10, 20);
-        doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
+    // Encabezado de la factura
+    doc.setFontSize(18);
+    doc.text("Factura", 10, 10);
+    doc.setFontSize(12);
+    doc.text(`Número de compra: ${compra.id}`, 10, 20);
+    doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
 
-        doc.text("Datos Fiscales:", 10, 40);
-        doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
-        doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
-        doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
+    // Datos fiscales
+    doc.text("Datos Fiscales:", 10, 40);
+    doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
+    doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
+    doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
 
-        doc.text("Detalles de la compra:", 10, 80);
-        const detalles = JSON.parse(compra.detalles);
+    // Detalles de la compra
+    doc.text("Detalles de la compra:", 10, 80);
 
-        const columns = ["Cantidad", "Descripción", "Precio Unitario", "Total"];
-        const rows = detalles.map((item) => [
-            item.cantidad,
-            item.nombre,
-            `$${item.precio}`,
-            `$${item.cantidad * item.precio}`,
-        ]);
+    // Crear la tabla manualmente
+    const detalles = JSON.parse(compra.detalles);
+    let y = 90; // Posición vertical inicial para la tabla
 
-        doc.autoTable({
-            startY: 85,
-            head: [columns],
-            body: rows,
-        });
+    // Encabezados de la tabla
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Cantidad", 10, y);
+    doc.text("Descripción", 40, y);
+    doc.text("Precio Unitario", 100, y);
+    doc.text("Total", 150, y);
 
-        const subtotal = compra.total / 1.16;
-        const iva = compra.total - subtotal;
+    y += 10; // Mover la posición hacia abajo para los datos
 
-        doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, doc.autoTable.previous.finalY + 10);
-        doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, doc.autoTable.previous.finalY + 20);
-        doc.text(`Total: $${compra.total}`, 10, doc.autoTable.previous.finalY + 30);
+    // Datos de la tabla
+    doc.setFont("helvetica", "normal");
+    detalles.forEach((item) => {
+        doc.text(item.cantidad.toString(), 10, y);
+        doc.text(item.nombre, 40, y);
+        doc.text(`$${item.precio.toFixed(2)}`, 100, y);
+        doc.text(`$${(item.cantidad * item.precio).toFixed(2)}`, 150, y);
+        y += 10; // Mover la posición hacia abajo para el siguiente producto
+    });
 
-        doc.save(`factura_${compra.id}.pdf`);
-    };
+    // Calcular subtotal, IVA y total
+    const subtotal = compra.total / 1.16;
+    const iva = compra.total - subtotal;
+
+    // Mostrar subtotal, IVA y total
+    doc.setFontSize(12);
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, y + 10);
+    doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
+    doc.text(`Total: $${compra.total.toFixed(2)}`, 10, y + 30);
+
+    // Guardar el PDF
+    doc.save(`factura_${compra.id}.pdf`);
+};
 
     return (
         <div className="container mt-4">
