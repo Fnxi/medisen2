@@ -27,6 +27,7 @@ function App() {
     const [mostrarCarrito, setMostrarCarrito] = useState(false);
     const [mostrarPerfil, setMostrarPerfil] = useState(false);
     const [mostrarDashboard, setMostrarDashboard] = useState(true);
+    const [mostrarProductos, setMostrarProductos] = useState(false);
     const [usuarios, setUsuarios] = useState([]);
     const [ventas, setVentas] = useState([]);
 
@@ -220,15 +221,20 @@ function App() {
                     <div className="collapse navbar-collapse" id="navbarNav">
                         <ul className="navbar-nav me-auto">
                             <li className="nav-item">
-                                <a className="nav-link text-white" href="#" onClick={() => { setMostrarDashboard(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarPerfil(false); }}>Dashboard</a>
+                                <a className="nav-link text-white" href="#" onClick={() => { setMostrarDashboard(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarPerfil(false); setMostrarProductos(false); }}>Dashboard</a>
                             </li>
+                            {userType === 2 && (
+                                <li className="nav-item">
+                                    <a className="nav-link text-white" href="#" onClick={() => { setMostrarProductos(true); setMostrarDashboard(false); setMostrarTienda(false); setMostrarCarrito(false); setMostrarPerfil(false); }}>Productos</a>
+                                </li>
+                            )}
                             {userType === 1 && (
                                 <>
                                     <li className="nav-item">
-                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarTienda(true); setMostrarCarrito(false); setMostrarBienvenida(false); setMostrarPerfil(false); }}>Tienda</a>
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarTienda(true); setMostrarCarrito(false); setMostrarBienvenida(false); setMostrarPerfil(false); setMostrarProductos(false); }}>Tienda</a>
                                     </li>
                                     <li className="nav-item">
-                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarCarrito(true); setMostrarTienda(false); setMostrarBienvenida(false); setMostrarPerfil(false); }}>Carrito</a>
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarCarrito(true); setMostrarTienda(false); setMostrarBienvenida(false); setMostrarPerfil(false); setMostrarProductos(false); }}>Carrito</a>
                                     </li>
                                 </>
                             )}
@@ -239,7 +245,7 @@ function App() {
                             <ul className="navbar-nav">
                                 {userType === 1 && (
                                     <li className="nav-item">
-                                        <a className="nav-link" href="#" onClick={() => { setMostrarPerfil(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarBienvenida(false); }}>Perfil</a>
+                                        <a className="nav-link" href="#" onClick={() => { setMostrarPerfil(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarBienvenida(false); setMostrarProductos(false); }}>Perfil</a>
                                     </li>
                                 )}
                                 <li className="nav-item">
@@ -253,88 +259,123 @@ function App() {
             <div className="container mt-4">
                 {isAuthenticated && userData && (
                     <>
-                {userType === 2 && mostrarDashboard && (
-    <>
-        <h3 className="text-center">Dashboard del Administrador</h3>
-        <div className="row">
-            <div className="col-md-4">
-                <div className="card">
-                    <div className="card-body">
-                        <h5 className="card-title">Productos Disponibles</h5>
-                        <p className="card-text">{productos.length}</p>
-                    </div>
-                </div>
-            </div>
-            <div className="col-md-4">
-                <div className="card">
-                    <div className="card-body">
-                        <h5 className="card-title">Usuarios Registrados</h5>
-                        <p className="card-text">{usuarios.length}</p>
-                    </div>
-                </div>
-            </div>
-            <div className="col-md-4">
-                <div className="card">
-                    <div className="card-body">
-                        <h5 className="card-title">Ventas Totales</h5>
-                        <p className="card-text">{ventas.length}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div className="row mt-4">
-            <div className="col-md-6">
-                <h4>Gráfico de Productos</h4>
-                <PieChart
-                    data={generarDatosGrafico()}
-                    style={{ height: "300px" }}
-                />
-            </div>
-            <div className="col-md-6">
-                <h4>Resumen de Ventas</h4>
-                <div className="card">
-                    <div className="card-body">
-                        <p className="card-text">
-                            Total de ventas realizadas: {ventas.length}
-                        </p>
-                        <p className="card-text">
-                            Ingresos totales: $
-                            {ventas.reduce((total, venta) => total + venta.total, 0)}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div className="row mt-4">
-            <div className="col-md-12">
-                <h4>Lista de Usuarios</h4>
-                <table className="table table-dark table-hover">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Email</th>
-                            <th>Tipo</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {usuarios.map((usuario) => (
-                            <tr key={usuario.id}>
-                                <td>{usuario.name}</td>
-                                <td>{usuario.email}</td>
-                                <td>{usuario.user === 1 ? "Usuario" : "Administrador"}</td>
-                                <td>
-                                    <button className="btn btn-warning">Editar</button>
-                                    <button className="btn btn-danger">Eliminar</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </>
-)}
+                        {userType === 2 && mostrarDashboard && (
+                            <>
+                                <h3 className="text-center">Dashboard del Administrador</h3>
+                                <div className="row">
+                                    <div className="col-md-4">
+                                        <div className="card">
+                                            <div className="card-body">
+                                                <h5 className="card-title">Productos Disponibles</h5>
+                                                <p className="card-text">{productos.length}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <div className="card">
+                                            <div className="card-body">
+                                                <h5 className="card-title">Usuarios Registrados</h5>
+                                                <p className="card-text">{usuarios.length}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <div className="card">
+                                            <div className="card-body">
+                                                <h5 className="card-title">Ventas Totales</h5>
+                                                <p className="card-text">{ventas.length}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-md-6">
+                                        <h4>Gráfico de Productos</h4>
+                                        <PieChart
+                                            data={generarDatosGrafico()}
+                                            style={{ height: "300px" }}
+                                        />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <h4>Resumen de Ventas</h4>
+                                        <div className="card">
+                                            <div className="card-body">
+                                                <p className="card-text">
+                                                    Total de ventas realizadas: {ventas.length}
+                                                </p>
+                                                <p className="card-text">
+                                                    Ingresos totales: $
+                                                    {ventas.reduce((total, venta) => total + venta.total, 0)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-md-12">
+                                        <h4>Lista de Usuarios</h4>
+                                        <table className="table table-dark table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nombre</th>
+                                                    <th>Email</th>
+                                                    <th>Tipo</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {usuarios.map((usuario) => (
+                                                    <tr key={usuario.id}>
+                                                        <td>{usuario.name}</td>
+                                                        <td>{usuario.email}</td>
+                                                        <td>{usuario.user === 1 ? "Usuario" : "Administrador"}</td>
+                                                        <td>
+                                                            <button className="btn btn-warning">Editar</button>
+                                                            <button className="btn btn-danger">Eliminar</button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {userType === 2 && mostrarProductos && (
+                            <>
+                                <h3 className="text-center">Productos Disponibles</h3>
+                                <table className="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Descripción</th>
+                                            <th>Precio</th>
+                                            <th>Cantidad</th>
+                                            <th>Editar</th>
+                                            <th>Eliminar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {productos.map(producto => (
+                                            <tr key={producto.id}>
+                                                <td>{producto.nombre}</td>
+                                                <td>{producto.descripcion}</td>
+                                                <td>{producto.precio}</td>
+                                                <td>{producto.cantidad}</td>
+                                                <td><button className="btn btn-warning" onClick={() => handleEditar(producto)}>Editar</button></td>
+                                                <td><button className="btn btn-danger" onClick={() => handleEliminar(producto.id)}>Dar de baja</button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <h3 className="text-center">Gráfico de Productos</h3>
+                                <div className="d-flex justify-content-center">
+                                    <PieChart data={generarDatosGrafico()} style={{ height: '300px' }} />
+                                </div>
+                            </>
+                        )}
+
                         {userType === 1 && mostrarBienvenida && (
                             <div>
                                 <h3 className="text-center">Bienvenido Usuario</h3>
