@@ -330,7 +330,7 @@ function App() {
                                     </div>
                                 </div>
                             </>
-                        )} : null}
+                        )}
 
                         {userType === 1 && mostrarBienvenida && (
                             <div>
