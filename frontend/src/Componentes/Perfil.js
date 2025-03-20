@@ -63,67 +63,70 @@ const Perfil = ({ userData }) => {
     };
 
     // Generar la factura en PDF
-    const handleGenerarFactura = (compra) => {
-        if (!compra) {
-            alert("No se ha seleccionado ninguna compra.");
-            return;
-        }
+const handleGenerarFactura = (compra) => {
+    if (!compra) {
+        alert("No se ha seleccionado ninguna compra.");
+        return;
+    }
 
-        const doc = new jsPDF();
+    const doc = new jsPDF();
 
-        // Encabezado de la factura
-        doc.setFontSize(18);
-        doc.text("Factura", 10, 10);
-        doc.setFontSize(12);
-        doc.text(`Número de compra: ${compra.id}`, 10, 20);
-        doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
+    // Encabezado de la factura
+    doc.setFontSize(18);
+    doc.text("Factura", 10, 10);
+    doc.setFontSize(12);
+    doc.text(`Número de compra: ${compra.id}`, 10, 20);
+    doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
 
-        // Datos fiscales
-        doc.text("Datos Fiscales:", 10, 40);
-        doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
-        doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
-        doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
+    // Datos fiscales
+    doc.text("Datos Fiscales:", 10, 40);
+    doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
+    doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
+    doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
 
-        // Detalles de la compra
-        doc.text("Detalles de la compra:", 10, 80);
+    // Detalles de la compra
+    doc.text("Detalles de la compra:", 10, 80);
 
-        // Crear la tabla manualmente
-        const detalles = JSON.parse(compra.detalles);
-        let y = 90; // Posición vertical inicial para la tabla
+    // Crear la tabla manualmente
+    const detalles = JSON.parse(compra.detalles);
+    let y = 90; // Posición vertical inicial para la tabla
 
-        // Encabezados de la tabla
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("Cantidad", 10, y);
-        doc.text("Descripción", 40, y);
-        doc.text("Precio Unitario", 100, y);
-        doc.text("Total", 150, y);
+    // Encabezados de la tabla
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Cantidad", 10, y);
+    doc.text("Descripción", 40, y);
+    doc.text("Precio Unitario", 100, y);
+    doc.text("Total", 150, y);
 
-        y += 10; // Mover la posición hacia abajo para los datos
+    y += 10; // Mover la posición hacia abajo para los datos
 
-        // Datos de la tabla
-        doc.setFont("helvetica", "normal");
-        detalles.forEach((item) => {
-            doc.text(item.cantidad.toString(), 10, y);
-            doc.text(item.nombre, 40, y);
-            doc.text(`$${item.precio.toFixed(2)}`, 100, y);
-            doc.text(`$${(item.cantidad * item.precio).toFixed(2)}`, 150, y);
-            y += 10; // Mover la posición hacia abajo para el siguiente producto
-        });
+    // Datos de la tabla
+    doc.setFont("helvetica", "normal");
+    detalles.forEach((item) => {
+        const precio = parseFloat(item.precio); // Convertir precio a número
+        const total = item.cantidad * precio; // Calcular el total
 
-        // Calcular subtotal, IVA y total
-        const subtotal = compra.total / 1.16;
-        const iva = compra.total - subtotal;
+        doc.text(item.cantidad.toString(), 10, y);
+        doc.text(item.nombre, 40, y);
+        doc.text(`$${precio.toFixed(2)}`, 100, y); // Formatear precio con 2 decimales
+        doc.text(`$${total.toFixed(2)}`, 150, y); // Formatear total con 2 decimales
+        y += 10; // Mover la posición hacia abajo para el siguiente producto
+    });
 
-        // Mostrar subtotal, IVA y total
-        doc.setFontSize(12);
-        doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, y + 10);
-        doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
-        doc.text(`Total: $${compra.total.toFixed(2)}`, 10, y + 30);
+    // Calcular subtotal, IVA y total
+    const subtotal = compra.total / 1.16;
+    const iva = compra.total - subtotal;
 
-        // Abrir el PDF en una nueva ventana
-        doc.output("dataurlnewwindow");
-    };
+    // Mostrar subtotal, IVA y total
+    doc.setFontSize(12);
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, y + 10);
+    doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
+    doc.text(`Total: $${compra.total.toFixed(2)}`, 10, y + 30);
+
+    // Abrir el PDF en una nueva ventana
+    doc.output("dataurlnewwindow");
+};
 
     return (
         <div className="container mt-4">
