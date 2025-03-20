@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const Perfil = ({ userData }) => {
-    const [editar, setEditar] = useState(false); // Estado para controlar el modo de edición
-    const [datosUsuario, setDatosUsuario] = useState(userData); // Estado para los datos editables
-    const [compras, setCompras] = useState([]); // Estado para almacenar las compras del usuario
+    const [editar, setEditar] = useState(false);
+    const [datosUsuario, setDatosUsuario] = useState(userData);
+    const [compras, setCompras] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [datosFiscales, setDatosFiscales] = useState({
+        nombreFiscal: "",
+        rfc: "",
+        direccionFiscal: "",
+    });
 
-    // Obtener las compras del usuario al cargar el componente
     useEffect(() => {
         const obtenerCompras = async () => {
             try {
@@ -43,7 +49,7 @@ const Perfil = ({ userData }) => {
             );
             if (response.data.success) {
                 alert("Datos actualizados correctamente.");
-                setEditar(false); // Salir del modo de edición
+                setEditar(false);
             } else {
                 alert("Error al actualizar los datos.");
             }
@@ -54,45 +60,43 @@ const Perfil = ({ userData }) => {
     };
 
     const handleGenerarFactura = (compra) => {
-        // Pedir datos fiscales al usuario
-        const nombreFiscal = prompt("Ingrese su nombre fiscal:");
-        const rfc = prompt("Ingrese su RFC:");
-        const direccionFiscal = prompt("Ingrese su dirección fiscal:");
-
-        if (!nombreFiscal || !rfc || !direccionFiscal) {
-            alert("Todos los datos fiscales son requeridos.");
-            return;
-        }
-
-        // Crear el PDF
         const doc = new jsPDF();
 
-        // Encabezado de la factura
         doc.setFontSize(18);
         doc.text("Factura", 10, 10);
         doc.setFontSize(12);
         doc.text(`Número de compra: ${compra.id}`, 10, 20);
         doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
 
-        // Datos fiscales
         doc.text("Datos Fiscales:", 10, 40);
-        doc.text(`Nombre: ${nombreFiscal}`, 10, 50);
-        doc.text(`RFC: ${rfc}`, 10, 60);
-        doc.text(`Dirección: ${direccionFiscal}`, 10, 70);
+        doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
+        doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
+        doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
 
-        // Detalles de la compra
         doc.text("Detalles de la compra:", 10, 80);
         const detalles = JSON.parse(compra.detalles);
-        let y = 90;
-        detalles.forEach((item, index) => {
-            doc.text(`${index + 1}. ${item.nombre} - Cantidad: ${item.cantidad} - Precio: $${item.precio}`, 10, y);
-            y += 10;
+
+        const columns = ["Cantidad", "Descripción", "Precio Unitario", "Total"];
+        const rows = detalles.map((item) => [
+            item.cantidad,
+            item.nombre,
+            `$${item.precio}`,
+            `$${item.cantidad * item.precio}`,
+        ]);
+
+        doc.autoTable({
+            startY: 85,
+            head: [columns],
+            body: rows,
         });
 
-        // Total
-        doc.text(`Total: $${compra.total}`, 10, y + 10);
+        const subtotal = compra.total / 1.16;
+        const iva = compra.total - subtotal;
 
-        // Guardar el PDF
+        doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, doc.autoTable.previous.finalY + 10);
+        doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, doc.autoTable.previous.finalY + 20);
+        doc.text(`Total: $${compra.total}`, 10, doc.autoTable.previous.finalY + 30);
+
         doc.save(`factura_${compra.id}.pdf`);
     };
 
@@ -144,7 +148,7 @@ const Perfil = ({ userData }) => {
                                     className="form-control"
                                     id="birthDate"
                                     name="birthDate"
-                                    value={datosUsuario.birthDate.split('T')[0]} // Formatear la fecha para el input
+                                    value={datosUsuario.birthDate.split('T')[0]}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -206,7 +210,6 @@ const Perfil = ({ userData }) => {
                 </div>
             </div>
 
-            {/* Tabla de compras */}
             <div className="mt-4">
                 <h4 className="text-center">Mis Compras</h4>
                 <table className="table table-striped">
@@ -227,7 +230,7 @@ const Perfil = ({ userData }) => {
                                 <td>
                                     <button
                                         className="btn btn-primary"
-                                        onClick={() => handleGenerarFactura(compra)}
+                                        onClick={() => setModalVisible(true)}
                                     >
                                         Generar Factura
                                     </button>
@@ -237,6 +240,62 @@ const Perfil = ({ userData }) => {
                     </tbody>
                 </table>
             </div>
+
+            {modalVisible && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Datos Fiscales</h5>
+                                <button type="button" className="btn-close" onClick={() => setModalVisible(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-3">
+                                    <label htmlFor="nombreFiscal" className="form-label">Nombre Fiscal</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        id="nombreFiscal"
+                                        value={datosFiscales.nombreFiscal}
+                                        onChange={(e) => setDatosFiscales({ ...datosFiscales, nombreFiscal: e.target.value })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="rfc" className="form-label">RFC</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        id="rfc"
+                                        value={datosFiscales.rfc}
+                                        onChange={(e) => setDatosFiscales({ ...datosFiscales, rfc: e.target.value })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="direccionFiscal" className="form-label">Dirección Fiscal</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        id="direccionFiscal"
+                                        value={datosFiscales.direccionFiscal}
+                                        onChange={(e) => setDatosFiscales({ ...datosFiscales, direccionFiscal: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setModalVisible(false)}>Cerrar</button>
+                                <button type="button" className="btn btn-primary" onClick={() => {
+                                    if (!datosFiscales.nombreFiscal || !datosFiscales.rfc || !datosFiscales.direccionFiscal) {
+                                        alert("Todos los datos fiscales son requeridos.");
+                                        return;
+                                    }
+                                    setModalVisible(false);
+                                    handleGenerarFactura(compra);
+                                }}>Generar Factura</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
