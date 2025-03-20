@@ -232,5 +232,20 @@ app.put("/api/usuarios/:id", (req, res) => {
     });
 });
 
+// Ruta para obtener las compras de un usuario
+app.get("/api/compras/:id_usuario", (req, res) => {
+    const { id_usuario } = req.params;
+
+    const query = "SELECT * FROM compras WHERE id_usuario = ?";
+    db.query(query, [id_usuario], (err, result) => {
+        if (err) {
+            console.error("Error al obtener las compras:", err);
+            return res.status(500).json({ success: false, message: "Error al obtener las compras" });
+        }
+
+        res.status(200).json({ success: true, compras: result });
+    });
+});
+
 // Exportar la app para Vercel
 module.exports = app;
