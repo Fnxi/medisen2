@@ -247,5 +247,29 @@ app.get("/api/compras/:id_usuario", (req, res) => {
     });
 });
 
+// Obtener todos los usuarios
+app.get("/api/usuarios", (req, res) => {
+    const query = "SELECT * FROM usuarios";
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error("Error al obtener usuarios:", err);
+            return res.status(500).json({ success: false, message: "Error al obtener usuarios" });
+        }
+        res.status(200).json(result);
+    });
+});
+
+// Obtener todas las compras
+app.get("/api/compras", (req, res) => {
+    const query = "SELECT * FROM compras";
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error("Error al obtener compras:", err);
+            return res.status(500).json({ success: false, message: "Error al obtener compras" });
+        }
+        res.status(200).json(result);
+    });
+});
+
 // Exportar la app para Vercel
 module.exports = app;
