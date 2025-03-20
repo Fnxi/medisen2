@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 const Perfil = ({ userData }) => {
     const [editar, setEditar] = useState(false); // Estado para controlar el modo de edición
@@ -14,7 +15,10 @@ const Perfil = ({ userData }) => {
 
     const handleGuardarCambios = async () => {
         try {
-            const response = await axios.put(`https://medisen2-pj7q.vercel.app/api/usuarios/${datosUsuario.id}`, datosUsuario);
+            const response = await axios.put(
+                `https://medisen2-pj7q.vercel.app/api/usuarios/${datosUsuario.id}`,
+                datosUsuario
+            );
             if (response.data.success) {
                 alert("Datos actualizados correctamente.");
                 setEditar(false); // Salir del modo de edición
