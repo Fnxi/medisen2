@@ -28,6 +28,7 @@ function App() {
     const [mostrarPerfil, setMostrarPerfil] = useState(false);
     const [mostrarDashboard, setMostrarDashboard] = useState(true);
     const [mostrarProductos, setMostrarProductos] = useState(false);
+    const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
     const [usuarios, setUsuarios] = useState([]);
     const [ventas, setVentas] = useState([]);
 
@@ -117,7 +118,32 @@ function App() {
 
     const handleEditar = (producto) => {
         setProductoEditando(producto);
-        setMostrarFormulario(true);
+        setMostrarModalEditar(true);
+    };
+
+    const handleActualizarProducto = async () => {
+        try {
+            const response = await axios.put(`https://medisen2-pj7q.vercel.app/api/productos/${productoEditando.id}`, {
+                nombre: productoEditando.nombre,
+                descripcion: productoEditando.descripcion,
+                precio: productoEditando.precio,
+            });
+
+            if (response.status === 200) {
+                alert("Producto actualizado con éxito");
+                setMostrarModalEditar(false);
+                // Actualizar la lista de productos
+                const updatedProductos = productos.map(producto =>
+                    producto.id === productoEditando.id ? productoEditando : producto
+                );
+                setProductos(updatedProductos);
+            } else {
+                alert("Error al actualizar el producto");
+            }
+        } catch (error) {
+            console.error("Error al actualizar el producto:", error);
+            alert("Error al actualizar el producto");
+        }
     };
 
     const handleEliminar = (id) => {
@@ -374,6 +400,60 @@ function App() {
                                     <PieChart data={generarDatosGrafico()} style={{ height: '300px' }} />
                                 </div>
                             </>
+                        )}
+
+                        {mostrarModalEditar && (
+                            <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                                <div className="modal-dialog">
+                                    <div className="modal-content">
+                                        <div className="modal-header">
+                                            <h5 className="modal-title">Editar Producto</h5>
+                                            <button type="button" className="btn-close" onClick={() => setMostrarModalEditar(false)}></button>
+                                        </div>
+                                        <div className="modal-body">
+                                            <form onSubmit={(e) => {
+                                                e.preventDefault();
+                                                handleActualizarProducto();
+                                            }}>
+                                                <div className="mb-3">
+                                                    <label htmlFor="nombre" className="form-label">Nombre</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        id="nombre"
+                                                        value={productoEditando?.nombre || ''}
+                                                        onChange={(e) => setProductoEditando({ ...productoEditando, nombre: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="mb-3">
+                                                    <label htmlFor="descripcion" className="form-label">Descripción</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        id="descripcion"
+                                                        value={productoEditando?.descripcion || ''}
+                                                        onChange={(e) => setProductoEditando({ ...productoEditando, descripcion: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="mb-3">
+                                                    <label htmlFor="precio" className="form-label">Precio</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control"
+                                                        id="precio"
+                                                        value={productoEditando?.precio || ''}
+                                                        onChange={(e) => setProductoEditando({ ...productoEditando, precio: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="modal-footer">
+                                                    <button type="button" className="btn btn-secondary" onClick={() => setMostrarModalEditar(false)}>Cancelar</button>
+                                                    <button type="submit" className="btn btn-primary">Guardar Cambios</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
                         {userType === 1 && mostrarBienvenida && (
