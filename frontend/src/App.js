@@ -4,7 +4,8 @@ import Formulario from "./Componentes/Form";
 import FormProducto from "./Componentes/FormProducto";
 import PayPalButton from "./Componentes/PayPalButton";
 import Perfil from "./Componentes/Perfil";
-import { PieChart, BarChart } from 'react-minimal-pie-chart';
+import BarChart from "./Componentes/BarChart"; // Asegúrate de que la ruta sea correcta
+import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
@@ -252,85 +253,85 @@ function App() {
             <div className="container mt-4">
                 {isAuthenticated && userData && (
                     <>
-                        {userType === 2 && mostrarDashboard && (
-                            <>
-                                <h3 className="text-center">Dashboard del Administrador</h3>
-                                <div className="row">
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <h5 className="card-title">Productos Disponibles</h5>
-                                                <p className="card-text">{productos.length}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <h5 className="card-title">Usuarios Registrados</h5>
-                                                <p className="card-text">{usuarios.length}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <h5 className="card-title">Ventas Totales</h5>
-                                                <p className="card-text">{ventas.length}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="row mt-4">
-                                    <div className="col-md-6">
-                                        <h4>Gráfico de Ventas</h4>
-                                        <BarChart
-                                            data={ventas.map((venta, index) => ({
-                                                title: `Venta ${index + 1}`,
-                                                value: venta.total,
-                                                color: colores[index % colores.length]
-                                            }))}
-                                            style={{ height: '300px' }}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <h4>Gráfico de Productos</h4>
-                                        <PieChart
-                                            data={generarDatosGrafico()}
-                                            style={{ height: '300px' }}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="row mt-4">
-                                    <div className="col-md-12">
-                                        <h4>Lista de Usuarios</h4>
-                                        <table className="table table-dark table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Nombre</th>
-                                                    <th>Email</th>
-                                                    <th>Tipo</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {usuarios.map(usuario => (
-                                                    <tr key={usuario.id}>
-                                                        <td>{usuario.name}</td>
-                                                        <td>{usuario.email}</td>
-                                                        <td>{usuario.user === 1 ? 'Usuario' : 'Administrador'}</td>
-                                                        <td>
-                                                            <button className="btn btn-warning">Editar</button>
-                                                            <button className="btn btn-danger">Eliminar</button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                    {userType === 2 && mostrarDashboard && (
+    <>
+        <h3 className="text-center">Dashboard del Administrador</h3>
+        <div className="row">
+            <div className="col-md-4">
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Productos Disponibles</h5>
+                        <p className="card-text">{productos.length}</p>
+                    </div>
+                </div>
+            </div>
+            <div className="col-md-4">
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Usuarios Registrados</h5>
+                        <p className="card-text">{usuarios.length}</p>
+                    </div>
+                </div>
+            </div>
+            <div className="col-md-4">
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Ventas Totales</h5>
+                        <p className="card-text">{ventas.length}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div className="row mt-4">
+            <div className="col-md-6">
+                <h4>Gráfico de Ventas</h4>
+                {/* Usamos el nuevo BarChart con react-chartjs-2 */}
+                <BarChart
+                    data={ventas.map((venta, index) => ({
+                        title: `Venta ${index + 1}`,
+                        value: venta.total,
+                        color: colores[index % colores.length],
+                    }))}
+                />
+            </div>
+            <div className="col-md-6">
+                <h4>Gráfico de Productos</h4>
+                <PieChart
+                    data={generarDatosGrafico()}
+                    style={{ height: "300px" }}
+                />
+            </div>
+        </div>
+        <div className="row mt-4">
+            <div className="col-md-12">
+                <h4>Lista de Usuarios</h4>
+                <table className="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {usuarios.map((usuario) => (
+                            <tr key={usuario.id}>
+                                <td>{usuario.name}</td>
+                                <td>{usuario.email}</td>
+                                <td>{usuario.user === 1 ? "Usuario" : "Administrador"}</td>
+                                <td>
+                                    <button className="btn btn-warning">Editar</button>
+                                    <button className="btn btn-danger">Eliminar</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </>
+)}
 
                         {userType === 1 && mostrarBienvenida && (
                             <div>
