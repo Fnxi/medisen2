@@ -58,11 +58,12 @@ app.post("/api/registrar", (req, res) => {
 });
 
 // Ruta de inicio de sesión
+// Ruta de inicio de sesión (modificada)
 app.post("/api/login", (req, res) => {
     const { email, password } = req.body;
 
     const query = "SELECT * FROM usuarios WHERE email = ?";
-    db.query(query, [email], (err, result) => {
+    db.query(query, [email], async (err, result) => {
         if (err) {
             console.error("Error al obtener usuario:", err);
             return res.status(500).json({ success: false, message: "Error al iniciar sesión" });
@@ -75,6 +76,14 @@ app.post("/api/login", (req, res) => {
 
         const user = result[0];
 
+        // Verificar si el usuario ya tiene una sesión activa
+        if (user.status === 1) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Ya existe una sesión activa con este usuario. Cierre la otra sesión primero." 
+            });
+        }
+
         bcrypt.compare(password, user.password, (err, isMatch) => {
             if (err) {
                 console.error("Error al comparar contraseñas:", err);
@@ -86,8 +95,62 @@ app.post("/api/login", (req, res) => {
                 return res.status(400).json({ success: false, message: "Contraseña incorrecta" });
             }
 
-            console.log("Inicio de sesión exitoso");
-            res.status(200).json({ success: true, message: "Inicio de sesión exitoso", user: user });
+            // Actualizar el estado del usuario a "conectado" (1)
+            const updateQuery = "UPDATE usuarios SET status = 1 WHERE id = ?";
+            db.query(updateQuery, [user.id], (updateErr) => {
+                if (updateErr) {
+                    console.error("Error al actualizar estado de usuario:", updateErr);
+                    return res.status(500).json({ success: false, message: "Error al iniciar sesión" });
+                }
+
+                console.log("Inicio de sesión exitoso");
+                res.status(200).json({ 
+                    success: true, 
+                    message: "Inicio de sesión exitoso", 
+                    user: user 
+                });
+            });
+        });
+    });
+});
+
+// Ruta para cerrar sesión
+app.post("/api/logout", (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ success: false, message: "ID de usuario requerido" });
+    }
+
+    const query = "UPDATE usuarios SET status = 0 WHERE id = ?";
+    db.query(query, [userId], (err, result) => {
+        if (err) {
+            console.error("Error al cerrar sesión:", err);
+            return res.status(500).json({ success: false, message: "Error al cerrar sesión" });
+        }
+
+        res.status(200).json({ success: true, message: "Sesión cerrada correctamente" });
+    });
+});
+
+// Ruta para verificar estado de sesión
+app.get("/api/check-session/:userId", (req, res) => {
+    const { userId } = req.params;
+
+    const query = "SELECT status FROM usuarios WHERE id = ?";
+    db.query(query, [userId], (err, result) => {
+        if (err) {
+            console.error("Error al verificar sesión:", err);
+            return res.status(500).json({ success: false, message: "Error al verificar sesión" });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            isActive: result[0].status === 1 
         });
     });
 });
