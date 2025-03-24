@@ -66,22 +66,34 @@ function App() {
     }, [isAuthenticated, userData, userType]);
 
     // Obtener datos de Firebase para el médico (usuario tipo 3)
-    useEffect(() => {
-        if (isAuthenticated && userData) {
-            if (userType === 3) {
-                const medicionesRef = ref(database, 'Mediciones/');
-                onValue(medicionesRef, (snapshot) => {
-                    const data = snapshot.val();
-                    const datos = [];
-                    for (let id in data) {
-                        datos.push(data[id]);
-                    }
-                    setDatosMedico(datos);
-                });
-            }
+  // Obtener datos de Firebase para el médico (usuario tipo 3)
+useEffect(() => {
+    if (isAuthenticated && userData) {
+        if (userType === 3) {
+            // Cambia la referencia para usar la nueva estructura
+            const medicionesRef = ref(database, 'Clientes/cliente_123/Mediciones/');
+            onValue(medicionesRef, (snapshot) => {
+                const data = snapshot.val();
+                const datos = [];
+                
+                // La nueva estructura parece tener mediciones por fecha/hora
+                for (let timestamp in data) {
+                    const medicion = data[timestamp];
+                    datos.push({
+                        Fecha: medicion.Fecha,
+                        Hora: medicion.Hora,
+                        Frecuencia_Cardiaca: medicion['Frecuencia Cardíaca'],
+                        Humedad: medicion['Húmedad'],
+                        Presion: medicion.Prestor,
+                        // Agrega otros campos según sea necesario
+                        timestamp: timestamp // Guardamos el timestamp como referencia
+                    });
+                }
+                setDatosMedico(datos);
+            });
         }
-    }, [isAuthenticated, userData, userType]);
-
+    }
+}, [isAuthenticated, userData, userType]);
     // Obtener el carrito del usuario
     useEffect(() => {
         if (isAuthenticated && userData) {
