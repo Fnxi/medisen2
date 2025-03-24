@@ -188,23 +188,99 @@ app.post("/api/guardar-compra", (req, res) => {
         return res.status(400).json({ success: false, message: "Faltan datos requeridos" });
     }
 
-    // Insertar en la tabla compras
-    const query = `
-        INSERT INTO compras (id_usuario, nombre_usuario, total, detalles)
-        VALUES (?, ?, ?, ?)
-    `;
-    const values = [id_usuario, nombre_usuario, total, detalles];
+    // Convertir detalles de string JSON a objeto JavaScript
+    let carrito;
+    try {
+        carrito = JSON.parse(detalles);
+    } catch (error) {
+        console.error("Error al parsear detalles del carrito:", error);
+        return res.status(400).json({ success: false, message: "Formato de carrito inválido" });
+    }
 
-    db.query(query, values, (err, result) => {
+    // Iniciar una transacción para asegurar la integridad de los datos
+    db.getConnection((err, connection) => {
         if (err) {
-            console.error("Error al guardar la compra:", err);
-            return res.status(500).json({ success: false, message: "Error al registrar la compra" });
+            console.error("Error al obtener conexión:", err);
+            return res.status(500).json({ success: false, message: "Error en el servidor" });
         }
 
-        res.json({ success: true, message: "Compra registrada correctamente." });
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error("Error al iniciar transacción:", err);
+                return res.status(500).json({ success: false, message: "Error en el servidor" });
+            }
+
+            try {
+                // 1. Insertar la compra en la tabla compras
+                const insertQuery = `
+                    INSERT INTO compras (id_usuario, nombre_usuario, total, detalles)
+                    VALUES (?, ?, ?, ?)
+                `;
+                const insertValues = [id_usuario, nombre_usuario, total, detalles];
+
+                await new Promise((resolve, reject) => {
+                    connection.query(insertQuery, insertValues, (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result);
+                    });
+                });
+
+                // 2. Actualizar las cantidades de cada producto en el carrito
+                for (const item of carrito) {
+                    const updateQuery = `
+                        UPDATE productos 
+                        SET cantidad = cantidad - ? 
+                        WHERE id = ? AND cantidad >= ?
+                    `;
+                    const updateValues = [item.cantidad, item.id, item.cantidad];
+
+                    await new Promise((resolve, reject) => {
+                        connection.query(updateQuery, updateValues, (err, result) => {
+                            if (err) return reject(err);
+                            if (result.affectedRows === 0) {
+                                return reject(new Error(`No hay suficiente stock para el producto ${item.id}`));
+                            }
+                            resolve(result);
+                        });
+                    });
+                }
+
+                // 3. Limpiar el carrito del usuario
+                const deleteQuery = "DELETE FROM carrito WHERE id_usuario = ?";
+                await new Promise((resolve, reject) => {
+                    connection.query(deleteQuery, [id_usuario], (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result);
+                    });
+                });
+
+                // Si todo salió bien, confirmar la transacción
+                connection.commit((err) => {
+                    if (err) {
+                        return connection.rollback(() => {
+                            connection.release();
+                            console.error("Error al confirmar transacción:", err);
+                            res.status(500).json({ success: false, message: "Error al registrar la compra" });
+                        });
+                    }
+                    connection.release();
+                    res.json({ success: true, message: "Compra registrada correctamente." });
+                });
+            } catch (error) {
+                // Si hay algún error, hacer rollback
+                connection.rollback(() => {
+                    connection.release();
+                    console.error("Error en la transacción:", error);
+                    res.status(500).json({ 
+                        success: false, 
+                        message: error.message || "Error al registrar la compra" 
+                    });
+                });
+            }
+        });
     });
 });
-
 // Ruta para actualizar un usuario
 app.put("/api/usuarios/:id", (req, res) => {
     const { id } = req.params;
