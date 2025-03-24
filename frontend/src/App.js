@@ -70,24 +70,13 @@ function App() {
 useEffect(() => {
     if (isAuthenticated && userData) {
         if (userType === 3) {
-            // Cambia la referencia para usar la nueva estructura
+            // Solo cambia esta línea con la nueva ruta
             const medicionesRef = ref(database, 'Clientes/cliente_123/Mediciones/');
             onValue(medicionesRef, (snapshot) => {
                 const data = snapshot.val();
                 const datos = [];
-                
-                // La nueva estructura parece tener mediciones por fecha/hora
-                for (let timestamp in data) {
-                    const medicion = data[timestamp];
-                    datos.push({
-                        Fecha: medicion.Fecha,
-                        Hora: medicion.Hora,
-                        Frecuencia_Cardiaca: medicion['Frecuencia Cardíaca'],
-                        Humedad: medicion['Húmedad'],
-                        Presion: medicion.Prestor,
-                        // Agrega otros campos según sea necesario
-                        timestamp: timestamp // Guardamos el timestamp como referencia
-                    });
+                for (let id in data) {
+                    datos.push(data[id]);
                 }
                 setDatosMedico(datos);
             });
