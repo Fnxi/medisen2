@@ -4,9 +4,12 @@ import Formulario from "./Componentes/Form";
 import FormProducto from "./Componentes/FormProducto";
 import PayPalButton from "./Componentes/PayPalButton";
 import Perfil from "./Componentes/Perfil";
+// Asegúrate de que la ruta sea correcta
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+
+// Importa Firebase y Realtime Database
 import { database, ref, onValue } from './firebase';
 
 function App() {
@@ -28,114 +31,72 @@ function App() {
     const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
     const [usuarios, setUsuarios] = useState([]);
     const [ventas, setVentas] = useState([]);
-    const [sessionCheckInterval, setSessionCheckInterval] = useState(null);
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
-    // Verificar sesión al cargar la aplicación
-   useEffect(() => {
-    const storedUserData = localStorage.getItem("userData");
-    const storedInterval = localStorage.getItem("sessionCheckInterval");
-    
-    if (storedUserData) {
-        const parsedUserData = JSON.parse(storedUserData);
-        verifySession(parsedUserData.id);
+    // Recuperar los datos de la sesión desde localStorage al cargar la página
+    useEffect(() => {
+        const storedUserData = localStorage.getItem("userData");
+        if (storedUserData) {
+            const parsedUserData = JSON.parse(storedUserData);
+            setUserData(parsedUserData);
+            setUserType(parsedUserData.user);
+            setIsAuthenticated(true);
+        }
+    }, []);
 
-        // Cargar datos médicos si el usuario es médico (tipo 3)
-        if (parsedUserData.user === 3) {
-            const medicalRef = ref(database, 'medicalData');
-            onValue(medicalRef, (snapshot) => {
+    useEffect(() => {
+        if (isAuthenticated && userData) {
+            axios.get("https://medisen2-pj7q.vercel.app/api/productos")
+                .then(response => setProductos(response.data.filter(producto => producto.estado === 1)))
+                .catch(error => console.error("Error obteniendo productos:", error));
+
+            if (userType === 2) {
+                // Obtener usuarios
+                axios.get("https://medisen2-pj7q.vercel.app/api/usuarios")
+                    .then(response => setUsuarios(response.data))
+                    .catch(error => console.error("Error obteniendo usuarios:", error));
+
+                // Obtener ventas
+                axios.get("https://medisen2-pj7q.vercel.app/api/compras")
+                    .then(response => setVentas(response.data))
+                    .catch(error => console.error("Error obteniendo ventas:", error));
+            }
+        }
+    }, [isAuthenticated, userData, userType]);
+
+    // Obtener datos de Firebase para el médico (usuario tipo 3)
+  // Obtener datos de Firebase para el médico (usuario tipo 3)
+useEffect(() => {
+    if (isAuthenticated && userData) {
+        if (userType === 3) {
+            // Solo cambia esta línea con la nueva ruta
+            const medicionesRef = ref(database, 'Clientes/cliente_123/Mediciones/');
+            onValue(medicionesRef, (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    const medicalDataArray = Object.keys(data).map(key => ({
-                        id: key,
-                        ...data[key]
-                    }));
-                    setDatosMedico(medicalDataArray);
+                const datos = [];
+                for (let id in data) {
+                    datos.push(data[id]);
                 }
+                setDatosMedico(datos);
             });
         }
     }
-
-    return () => {
-        if (sessionCheckInterval) {
-            clearInterval(sessionCheckInterval);
+}, [isAuthenticated, userData, userType]);
+    // Obtener el carrito del usuario
+    useEffect(() => {
+        if (isAuthenticated && userData) {
+            obtenerCarrito();
         }
-        // Limpiar suscripción a Firebase
-        const medicalRef = ref(database, 'medicalData');
-        off(medicalRef);
-    };
-}, []);
-
-    const verifySession = async (userId) => {
-        try {
-            const response = await axios.get(`https://medisen2-pj7q.vercel.app/api/check-session/${userId}`);
-            
-            if (response.data.success && response.data.isActive) {
-                const storedUserData = localStorage.getItem("userData");
-                if (storedUserData) {
-                    const parsedUserData = JSON.parse(storedUserData);
-                    setUserData(parsedUserData);
-                    setUserType(parsedUserData.user);
-                    setIsAuthenticated(true);
-                    
-                    // Iniciar verificación periódica de sesión
-                    const interval = setInterval(() => checkSessionStatus(parsedUserData.id), 60000);
-                    setSessionCheckInterval(interval);
-                    localStorage.setItem("sessionCheckInterval", interval.toString());
-                    
-                    // Cargar datos iniciales
-                    loadInitialData();
-                }
-            } else {
-                handleLogout();
-            }
-        } catch (error) {
-            console.error("Error al verificar sesión:", error);
-            handleLogout();
-        }
-    };
-
-    const loadInitialData = async () => {
-        try {
-            const productosResponse = await axios.get("https://medisen2-pj7q.vercel.app/api/productos");
-            setProductos(productosResponse.data.filter(producto => producto.estado === 1));
-
-            if (userType === 2) {
-                const [usuariosResponse, ventasResponse] = await Promise.all([
-                    axios.get("https://medisen2-pj7q.vercel.app/api/usuarios"),
-                    axios.get("https://medisen2-pj7q.vercel.app/api/compras")
-                ]);
-                setUsuarios(usuariosResponse.data);
-                setVentas(ventasResponse.data);
-            }
-
-            if (userType === 1 || userType === 3) {
-                obtenerCarrito();
-            }
-        } catch (error) {
-            console.error("Error cargando datos iniciales:", error);
-        }
-    };
-
-    const checkSessionStatus = async (userId) => {
-        try {
-            const response = await axios.get(`https://medisen2-pj7q.vercel.app/api/check-session/${userId}`);
-            
-            if (!response.data.isActive) {
-                handleLogout();
-                alert("Tu sesión ha sido cerrada porque iniciaron sesión desde otro dispositivo.");
-            }
-        } catch (error) {
-            console.error("Error al verificar estado de sesión:", error);
-        }
-    };
+    }, [isAuthenticated, userData]);
 
     const obtenerCarrito = async () => {
         try {
             const response = await axios.get(`https://medisen2-pj7q.vercel.app/api/carrito/${userData.id}`);
             if (response.data.success) {
                 setCarrito(response.data.carrito);
+            } else {
+                console.error("Error al obtener el carrito:", response.data.message);
             }
         } catch (error) {
             console.error("Error al obtener el carrito:", error);
@@ -151,49 +112,9 @@ function App() {
         setIsAuthenticated(true);
         cerrarFormulario();
         localStorage.setItem("userData", JSON.stringify(userDataFromResponse));
-        
-        const interval = setInterval(() => checkSessionStatus(userDataFromResponse.id), 60000);
-        setSessionCheckInterval(interval);
-        localStorage.setItem("sessionCheckInterval", interval.toString());
-        
         if (userDataFromResponse.user === 1) {
             setMostrarBienvenida(true);
         }
-        
-        loadInitialData();
-    };
-
-    const handleLogout = async () => {
-        if (userData && userData.id) {
-            try {
-                await axios.post("https://medisen2-pj7q.vercel.app/api/logout", {
-                    userId: userData.id
-                });
-            } catch (error) {
-                console.error("Error al cerrar sesión en el servidor:", error);
-            }
-        }
-        
-        // Limpiar estado local
-        setIsAuthenticated(false);
-        setUserData(null);
-        setUserType(null);
-        localStorage.removeItem("userData");
-        
-        // Limpiar intervalo de verificación
-        if (sessionCheckInterval) {
-            clearInterval(sessionCheckInterval);
-        }
-        localStorage.removeItem("sessionCheckInterval");
-        setSessionCheckInterval(null);
-        
-        // Resetear estados de la aplicación
-        setMostrarDashboard(true);
-        setMostrarTienda(false);
-        setMostrarCarrito(false);
-        setMostrarPerfil(false);
-        setMostrarProductos(false);
-        setMostrarBienvenida(false);
     };
 
     const handleEditar = (producto) => {
@@ -212,9 +133,13 @@ function App() {
             if (response.status === 200) {
                 alert("Producto actualizado con éxito");
                 setMostrarModalEditar(false);
-                setProductos(productos.map(producto =>
+                // Actualizar la lista de productos
+                const updatedProductos = productos.map(producto =>
                     producto.id === productoEditando.id ? productoEditando : producto
-                ));
+                );
+                setProductos(updatedProductos);
+            } else {
+                alert("Error al actualizar el producto");
             }
         } catch (error) {
             console.error("Error al actualizar el producto:", error);
@@ -235,10 +160,13 @@ function App() {
             const response = await axios.delete(`https://medisen2-pj7q.vercel.app/api/carrito/${id}`);
             if (response.data.success) {
                 alert("Producto eliminado del carrito");
-                obtenerCarrito();
+                obtenerCarrito(); // Actualizar el carrito
+            } else {
+                alert("Error al eliminar el producto del carrito");
             }
         } catch (error) {
             console.error("Error al eliminar producto del carrito:", error);
+            alert("Error al eliminar el producto del carrito");
         }
     };
 
@@ -250,14 +178,6 @@ function App() {
         }));
     };
 
-    const generarDatosGraficoMedico = () => {
-        return datosMedico.map((medicion, index) => ({
-            title: `Medición ${index + 1}`,
-            value: medicion.Promedio_Salud,
-            color: colores[index % colores.length]
-        }));
-    };
-
     const handleIrATienda = () => {
         setMostrarBienvenida(false);
         setMostrarTienda(true);
@@ -265,13 +185,19 @@ function App() {
     };
 
     const handleCantidadChange = (id, cantidad) => {
-        const producto = productos.find(p => p.id === id);
-        if (producto && cantidad <= producto.cantidad && cantidad > 0) {
-            setCantidadSeleccionada(prev => ({
-                ...prev,
+        if (cantidad <= productos.find(producto => producto.id === id).cantidad) {
+            setCantidadSeleccionada(prevState => ({
+                ...prevState,
                 [id]: cantidad
             }));
         }
+    };
+
+    const handleLogout = () => {
+        setIsAuthenticated(false);
+        setUserData(null);
+        setUserType(null);
+        localStorage.removeItem("userData");
     };
 
     const handleComprar = async (productoId) => {
@@ -286,7 +212,7 @@ function App() {
 
             if (response.data.success) {
                 alert("Producto añadido al carrito");
-                obtenerCarrito();
+                obtenerCarrito(); // Actualizar el carrito
                 setProductos(prevProductos =>
                     prevProductos.map(producto =>
                         producto.id === productoId
@@ -294,37 +220,21 @@ function App() {
                             : producto
                     )
                 );
+            } else {
+                alert("Error al añadir el producto al carrito");
             }
         } catch (error) {
             console.error("Error al añadir producto al carrito:", error);
+            alert("Error al añadir el producto al carrito");
         }
     };
 
-    const handlePaymentSuccess = async (paymentDetails) => {
-        try {
-            const detallesCarrito = JSON.stringify(carrito.map(item => ({
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                precio: item.precio
-            })));
-
-            const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-
-            const response = await axios.post("https://medisen2-pj7q.vercel.app/api/guardar-compra", {
-                id_usuario: userData.id,
-                nombre_usuario: userData.name,
-                total: total,
-                detalles: detallesCarrito
-            });
-
-            if (response.data.success) {
-                alert("Compra realizada con éxito");
-                setCarrito([]);
-                loadInitialData();
-            }
-        } catch (error) {
-            console.error("Error al procesar la compra:", error);
-        }
+    const generarDatosGraficoMedico = () => {
+        return datosMedico.map((medicion, index) => ({
+            title: `Medición ${index + 1}`,
+            value: medicion.Promedio_Salud,
+            color: colores[index % colores.length]
+        }));
     };
 
     return (
@@ -338,44 +248,20 @@ function App() {
                     <div className="collapse navbar-collapse" id="navbarNav">
                         <ul className="navbar-nav me-auto">
                             <li className="nav-item">
-                                <a className="nav-link text-white" href="#" onClick={() => { 
-                                    setMostrarDashboard(true); 
-                                    setMostrarTienda(false); 
-                                    setMostrarCarrito(false); 
-                                    setMostrarPerfil(false); 
-                                    setMostrarProductos(false); 
-                                }}>Dashboard</a>
+                                <a className="nav-link text-white" href="#" onClick={() => { setMostrarDashboard(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarPerfil(false); setMostrarProductos(false); }}>Dashboard</a>
                             </li>
                             {userType === 2 && (
                                 <li className="nav-item">
-                                    <a className="nav-link text-white" href="#" onClick={() => { 
-                                        setMostrarProductos(true); 
-                                        setMostrarDashboard(false); 
-                                        setMostrarTienda(false); 
-                                        setMostrarCarrito(false); 
-                                        setMostrarPerfil(false); 
-                                    }}>Productos</a>
+                                    <a className="nav-link text-white" href="#" onClick={() => { setMostrarProductos(true); setMostrarDashboard(false); setMostrarTienda(false); setMostrarCarrito(false); setMostrarPerfil(false); }}>Productos</a>
                                 </li>
                             )}
                             {userType === 1 && (
                                 <>
                                     <li className="nav-item">
-                                        <a className="nav-link text-white" href="#" onClick={() => { 
-                                            setMostrarTienda(true); 
-                                            setMostrarCarrito(false); 
-                                            setMostrarBienvenida(false); 
-                                            setMostrarPerfil(false); 
-                                            setMostrarProductos(false); 
-                                        }}>Tienda</a>
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarTienda(true); setMostrarCarrito(false); setMostrarBienvenida(false); setMostrarPerfil(false); setMostrarProductos(false); }}>Tienda</a>
                                     </li>
                                     <li className="nav-item">
-                                        <a className="nav-link text-white" href="#" onClick={() => { 
-                                            setMostrarCarrito(true); 
-                                            setMostrarTienda(false); 
-                                            setMostrarBienvenida(false); 
-                                            setMostrarPerfil(false); 
-                                            setMostrarProductos(false); 
-                                        }}>Carrito</a>
+                                        <a className="nav-link text-white" href="#" onClick={() => { setMostrarCarrito(true); setMostrarTienda(false); setMostrarBienvenida(false); setMostrarPerfil(false); setMostrarProductos(false); }}>Carrito</a>
                                     </li>
                                 </>
                             )}
@@ -386,13 +272,7 @@ function App() {
                             <ul className="navbar-nav">
                                 {userType === 1 && (
                                     <li className="nav-item">
-                                        <a className="nav-link" href="#" onClick={() => { 
-                                            setMostrarPerfil(true); 
-                                            setMostrarTienda(false); 
-                                            setMostrarCarrito(false); 
-                                            setMostrarBienvenida(false); 
-                                            setMostrarProductos(false); 
-                                        }}>Perfil</a>
+                                        <a className="nav-link" href="#" onClick={() => { setMostrarPerfil(true); setMostrarTienda(false); setMostrarCarrito(false); setMostrarBienvenida(false); setMostrarProductos(false); }}>Perfil</a>
                                     </li>
                                 )}
                                 <li className="nav-item">
@@ -467,7 +347,6 @@ function App() {
                                                     <th>Nombre</th>
                                                     <th>Email</th>
                                                     <th>Tipo</th>
-                                                    <th>Estado</th>
                                                     <th>Acciones</th>
                                                 </tr>
                                             </thead>
@@ -477,7 +356,6 @@ function App() {
                                                         <td>{usuario.name}</td>
                                                         <td>{usuario.email}</td>
                                                         <td>{usuario.user === 1 ? "Usuario" : "Administrador"}</td>
-                                                        <td>{usuario.status === 1 ? "Conectado" : "Desconectado"}</td>
                                                         <td>
                                                             <button className="btn btn-warning">Editar</button>
                                                             <button className="btn btn-danger">Eliminar</button>
@@ -581,11 +459,8 @@ function App() {
 
                         {userType === 1 && mostrarBienvenida && (
                             <div>
-                                <h3 className="text-center">Bienvenido {userData.name}</h3>
+                                <h3 className="text-center">Bienvenido Usuario</h3>
                                 <p className="text-center">Gracias por iniciar sesión. Haz clic en "Tienda" para ver nuestros productos.</p>
-                                <div className="text-center">
-                                    <button className="btn btn-primary" onClick={handleIrATienda}>Ir a Tienda</button>
-                                </div>
                             </div>
                         )}
 
@@ -601,7 +476,7 @@ function App() {
                                                     <h5 className="card-title">{producto.nombre}</h5>
                                                     <p className="card-text">{producto.descripcion}</p>
                                                     <p className="card-text"><strong>Precio:</strong> ${producto.precio}</p>
-                                                    <p className="card-text"><strong>Disponibles:</strong> {producto.cantidad}</p>
+                                                    <p className="card-text"><strong>Cantidad:</strong> {producto.cantidad}</p>
                                                     <div className="mb-3">
                                                         <label htmlFor={`cantidad_${producto.id}`} className="form-label">Cantidad</label>
                                                         <input
@@ -614,13 +489,7 @@ function App() {
                                                             onChange={(e) => handleCantidadChange(producto.id, e.target.value)}
                                                         />
                                                     </div>
-                                                    <button 
-                                                        className="btn btn-success" 
-                                                        onClick={() => handleComprar(producto.id)}
-                                                        disabled={producto.cantidad <= 0}
-                                                    >
-                                                        {producto.cantidad <= 0 ? "Agotado" : "Añadir al carrito"}
-                                                    </button>
+                                                    <button className="btn btn-success" onClick={() => handleComprar(producto.id)}>Comprar</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -664,123 +533,75 @@ function App() {
                                             </tbody>
                                         </table>
                                         <h4 className="text-end">Total: ${carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}</h4>
-                                        <div className="d-flex justify-content-end">
-                                            <PayPalButton
-                                                total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}
-                                                carrito={carrito}
-                                                userData={userData}
-                                                onPaymentSuccess={handlePaymentSuccess}
-                                            />
-                                        </div>
+                                        <PayPalButton
+                                            total={carrito.reduce((total, item) => total + item.cantidad * item.precio, 0)}
+                                            carrito={carrito}
+                                            userData={userData}
+                                        />
                                     </>
                                 ) : (
-                                    <div className="text-center">
-                                        <p>No hay productos en el carrito.</p>
-                                        <button className="btn btn-primary" onClick={() => {
-                                            setMostrarTienda(true);
-                                            setMostrarCarrito(false);
-                                        }}>
-                                            Ir a Tienda
-                                        </button>
-                                    </div>
+                                    <p className="text-center">No hay productos en el carrito.</p>
                                 )}
                             </div>
                         )}
 
                         {userType === 1 && mostrarPerfil && (
-                            <Perfil userData={userData} onLogout={handleLogout} />
+                            <Perfil userData={userData} />
                         )}
 
-                        {userType === 3 && (
-                            <div>
-                                <h3 className="text-center">Datos del Paciente</h3>
-                                {datosMedico.length > 0 ? (
-                                    <>
-                                        <table className="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>Fecha</th>
-                                                    <th>Hora</th>
-                                                    <th>Frecuencia Cardíaca</th>
-                                                    <th>Humedad</th>
-                                                    <th>Presión</th>
-                                                    <th>Promedio Salud</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {datosMedico.map((medicion, index) => (
-                                                    <tr key={index}>
-                                                        <td>{medicion.Fecha}</td>
-                                                        <td>{medicion.Hora}</td>
-                                                        <td>{medicion.Frecuencia_Cardiaca}</td>
-                                                        <td>{medicion.Humedad}</td>
-                                                        <td>{medicion.Presion}</td>
-                                                        <td>{medicion.Promedio_Salud}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        <div className="row mt-4">
-                                            <div className="col-md-6">
-                                                <h4>Resumen de Salud</h4>
-                                                <PieChart
-                                                    data={generarDatosGraficoMedico()}
-                                                    style={{ height: "300px" }}
-                                                />
-                                            </div>
-                                            <div className="col-md-6">
-                                                <h4>Gráfico de Frecuencia Cardíaca</h4>
-                                               
-                                            </div>
-                                        </div>
-                                        <h3 className="text-center mt-4">Formulario de Recetario</h3>
-                                        <form className="mt-3">
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <div className="mb-3">
-                                                        <label htmlFor="medicamento" className="form-label">Medicamento</label>
-                                                        <input type="text" className="form-control" id="medicamento" />
-                                                    </div>
-                                                    <div className="mb-3">
-                                                        <label htmlFor="dosis" className="form-label">Dosis</label>
-                                                        <input type="text" className="form-control" id="dosis" />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div className="mb-3">
-                                                        <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
-                                                        <textarea className="form-control" id="indicaciones" rows="3"></textarea>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="text-center">
-                                                <button type="submit" className="btn btn-primary">Enviar Receta</button>
-                                            </div>
-                                        </form>
-                                    </>
-                                ) : (
-                                    <p className="text-center">No hay datos médicos disponibles.</p>
-                                )}
+                      {userType === 3 && datosMedico.length > 0 && (
+    <div>
+        <h3 className="text-center">Datos del Paciente</h3>
+        <table className="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Frecuencia Cardíaca</th>
+                    <th>Humedad</th>
+                    <th>Presión</th>
+                </tr>
+            </thead>
+            <tbody>
+                {datosMedico.map((medicion, index) => (
+                    <tr key={index}>
+                        <td>{medicion.Fecha}</td>
+                        <td>{medicion.Hora}</td>
+                        <td>{medicion.Frecuencia_Cardiaca}</td>
+                        <td>{medicion.Humedad}</td>
+                        <td>{medicion.Presion}</td>
+                    </tr>
+                ))}
+            </tbody>
+                                </table>
+                                <h3 className="text-center">Formulario de Recetario</h3>
+                                <form>
+                                    <div className="mb-3">
+                                        <label htmlFor="medicamento" className="form-label">Medicamento</label>
+                                        <input type="text" className="form-control" id="medicamento" />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="dosis" className="form-label">Dosis</label>
+                                        <input type="text" className="form-control" id="dosis" />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
+                                        <textarea className="form-control" id="indicaciones" rows="3"></textarea>
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">Enviar</button>
+                                </form>
                             </div>
                         )}
                     </>
                 )}
 
                 {!isAuthenticated && mostrarFormulario && (
-                    <Formulario 
-                        onLoginSuccess={handleLoginSuccess} 
-                        closeModal={cerrarFormulario}
-                    />
+                    <Formulario onLoginSuccess={handleLoginSuccess} />
                 )}
 
                 {!isAuthenticated && !mostrarFormulario && (
                     <div className="text-center">
-                        <h2>Bienvenido a Zephyr Medical</h2>
-                        <p>Por favor, inicia sesión para acceder al sistema.</p>
-                        <button className="btn btn-primary" onClick={abrirFormulario}>Iniciar Sesión</button>
-                        <div className="mt-4">
-                            <img src="assets/images/medical-banner.jpg" alt="Banner Médico" className="img-fluid rounded" />
-                        </div>
+                        <p>Por favor, inicia sesión para acceder al contenido.</p>
                     </div>
                 )}
             </div>
