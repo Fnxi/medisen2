@@ -34,21 +34,39 @@ function App() {
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
     // Verificar sesión al cargar la aplicación
-    useEffect(() => {
-        const storedUserData = localStorage.getItem("userData");
-        const storedInterval = localStorage.getItem("sessionCheckInterval");
-        
-        if (storedUserData) {
-            const parsedUserData = JSON.parse(storedUserData);
-            verifySession(parsedUserData.id);
-        }
+   useEffect(() => {
+    const storedUserData = localStorage.getItem("userData");
+    const storedInterval = localStorage.getItem("sessionCheckInterval");
+    
+    if (storedUserData) {
+        const parsedUserData = JSON.parse(storedUserData);
+        verifySession(parsedUserData.id);
 
-        return () => {
-            if (sessionCheckInterval) {
-                clearInterval(sessionCheckInterval);
-            }
-        };
-    }, []);
+        // Cargar datos médicos si el usuario es médico (tipo 3)
+        if (parsedUserData.user === 3) {
+            const medicalRef = ref(database, 'medicalData');
+            onValue(medicalRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const medicalDataArray = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+                    setDatosMedico(medicalDataArray);
+                }
+            });
+        }
+    }
+
+    return () => {
+        if (sessionCheckInterval) {
+            clearInterval(sessionCheckInterval);
+        }
+        // Limpiar suscripción a Firebase
+        const medicalRef = ref(database, 'medicalData');
+        off(medicalRef);
+    };
+}, []);
 
     const verifySession = async (userId) => {
         try {
