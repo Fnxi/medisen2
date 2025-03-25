@@ -4,7 +4,6 @@ import Formulario from "./Componentes/Form";
 import FormProducto from "./Componentes/FormProducto";
 import PayPalButton from "./Componentes/PayPalButton";
 import Perfil from "./Componentes/Perfil";
-import BarChart from "./Componentes/BarChart";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -731,7 +730,7 @@ function App() {
                                             </div>
                                             <div className="col-md-6">
                                                 <h4>Gráfico de Frecuencia Cardíaca</h4>
-                                                <BarChart datos={datosMedico} />
+                                               
                                             </div>
                                         </div>
                                         <h3 className="text-center mt-4">Formulario de Recetario</h3>
