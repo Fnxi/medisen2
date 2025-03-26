@@ -31,19 +31,56 @@ function App() {
     const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
     const [usuarios, setUsuarios] = useState([]);
     const [ventas, setVentas] = useState([]);
+    const [sessionCheckIntervalId, setSessionCheckIntervalId] = useState(null);
 
     const colores = ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FF5733", "#33F0FF", "#F0FF33"];
 
-    // Recuperar los datos de la sesión desde localStorage al cargar la página
+    const checkSessionStatus = async () => {
+        if (isAuthenticated && userData && userData.id) {
+            try {
+                const response = await axios.get(`https://medisen2-pj7q.vercel.app/api/check-session/${userData.id}`);
+                if (!response.data.success || !response.data.isActive) {
+                    console.log("Sesión inválida detectada por verificación periódica.");
+                    handleLogout();
+                    alert("Tu sesión ha expirado o ha sido invalidada. Por favor, inicia sesión de nuevo.");
+                }
+            } catch (error) {
+                console.error("Error al verificar el estado de la sesión:", error);
+                // Considerar si se debe cerrar sesión aquí o intentar de nuevo
+            }
+        }
+    };
+
     useEffect(() => {
         const storedUserData = localStorage.getItem("userData");
         if (storedUserData) {
             const parsedUserData = JSON.parse(storedUserData);
             setUserData(parsedUserData);
             setUserType(parsedUserData.user);
-            setIsAuthenticated(true);
+            // No establecer isAuthenticated directamente aquí, llamaremos a verifySession
+            verifySession(parsedUserData);
         }
     }, []);
+
+    const verifySession = async (storedUserData) => {
+        if (storedUserData && storedUserData.id) {
+            try {
+                const response = await axios.get(`https://medisen2-pj7q.vercel.app/api/check-session/${storedUserData.id}`);
+                if (response.data.success && response.data.isActive) {
+                    setIsAuthenticated(true);
+                    // Iniciar la verificación periódica de la sesión
+                    const intervalId = setInterval(checkSessionStatus, 60000); // Cada 60 segundos
+                    setSessionCheckIntervalId(intervalId);
+                } else {
+                    console.log("La sesión almacenada en localStorage no es válida.");
+                    handleLogout();
+                }
+            } catch (error) {
+                console.error("Error al verificar la sesión:", error);
+                handleLogout();
+            }
+        }
+    };
 
     useEffect(() => {
         if (isAuthenticated && userData) {
@@ -66,23 +103,22 @@ function App() {
     }, [isAuthenticated, userData, userType]);
 
     // Obtener datos de Firebase para el médico (usuario tipo 3)
-  // Obtener datos de Firebase para el médico (usuario tipo 3)
-useEffect(() => {
-    if (isAuthenticated && userData) {
-        if (userType === 3) {
-            // Solo cambia esta línea con la nueva ruta
-            const medicionesRef = ref(database, 'Clientes/cliente_123/Mediciones/');
-            onValue(medicionesRef, (snapshot) => {
-                const data = snapshot.val();
-                const datos = [];
-                for (let id in data) {
-                    datos.push(data[id]);
-                }
-                setDatosMedico(datos);
-            });
+    useEffect(() => {
+        if (isAuthenticated && userData) {
+            if (userType === 3) {
+                // Solo cambia esta línea con la nueva ruta
+                const medicionesRef = ref(database, 'Clientes/cliente_123/Mediciones/');
+                onValue(medicionesRef, (snapshot) => {
+                    const data = snapshot.val();
+                    const datos = [];
+                    for (let id in data) {
+                        datos.push(data[id]);
+                    }
+                    setDatosMedico(datos);
+                });
+            }
         }
-    }
-}, [isAuthenticated, userData, userType]);
+    }, [isAuthenticated, userData, userType]);
     // Obtener el carrito del usuario
     useEffect(() => {
         if (isAuthenticated && userData) {
@@ -112,6 +148,9 @@ useEffect(() => {
         setIsAuthenticated(true);
         cerrarFormulario();
         localStorage.setItem("userData", JSON.stringify(userDataFromResponse));
+        // Iniciar la verificación periódica de la sesión después del inicio de sesión
+        const intervalId = setInterval(checkSessionStatus, 60000); // Cada 60 segundos
+        setSessionCheckIntervalId(intervalId);
         if (userDataFromResponse.user === 1) {
             setMostrarBienvenida(true);
         }
@@ -198,6 +237,18 @@ useEffect(() => {
         setUserData(null);
         setUserType(null);
         localStorage.removeItem("userData");
+        // Limpiar el intervalo de verificación de sesión
+        if (sessionCheckIntervalId) {
+            clearInterval(sessionCheckIntervalId);
+            setSessionCheckIntervalId(null);
+        }
+        // Resetear otros estados relacionados con la sesión si es necesario
+        setMostrarBienvenida(false);
+        setMostrarTienda(false);
+        setMostrarCarrito(false);
+        setMostrarPerfil(false);
+        setMostrarDashboard(true);
+        setMostrarProductos(false);
     };
 
     const handleComprar = async (productoId) => {
