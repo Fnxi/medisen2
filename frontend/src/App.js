@@ -232,24 +232,77 @@ function App() {
         }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+    try {
+        // Solo intentar cerrar sesión en el backend si tenemos userData
+        if (userData && userData.id) {
+            const response = await axios.post(
+                "https://medisen2-pj7q.vercel.app/api/logout",
+                { userId: userData.id },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Si usas autenticación por token, incluye esta línea:
+                        // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            );
+
+            if (!response.data.success) {
+                console.warn("El backend no confirmó el cierre de sesión:", response.data.message);
+                // Podrías mostrar un mensaje al usuario aquí si lo deseas
+                // alert("Hubo un problema al cerrar sesión en el servidor");
+            }
+        }
+
+        // Limpieza del frontend (se ejecuta siempre, independientemente del backend)
         setIsAuthenticated(false);
         setUserData(null);
         setUserType(null);
         localStorage.removeItem("userData");
+        
+        // Limpiar tokens si los tienes
+        // localStorage.removeItem("token");
+        // localStorage.removeItem("refreshToken");
+        
         // Limpiar el intervalo de verificación de sesión
         if (sessionCheckIntervalId) {
             clearInterval(sessionCheckIntervalId);
             setSessionCheckIntervalId(null);
         }
-        // Resetear otros estados relacionados con la sesión si es necesario
+        
+        // Resetear todos los estados de la UI
         setMostrarBienvenida(false);
         setMostrarTienda(false);
         setMostrarCarrito(false);
         setMostrarPerfil(false);
         setMostrarDashboard(true);
         setMostrarProductos(false);
-    };
+
+        // Opcional: Redirigir a la página de login
+        // window.location.href = '/login';
+        
+        // Opcional: Mostrar mensaje de éxito
+        // alert("Sesión cerrada correctamente");
+
+    } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+        
+        // Aún así limpiamos el frontend para no dejar al usuario atascado
+        setIsAuthenticated(false);
+        setUserData(null);
+        setUserType(null);
+        localStorage.removeItem("userData");
+        
+        if (sessionCheckIntervalId) {
+            clearInterval(sessionCheckIntervalId);
+            setSessionCheckIntervalId(null);
+        }
+        
+        // Mostrar mensaje de error al usuario
+        alert("Ocurrió un error al cerrar sesión, pero se limpiaron los datos locales");
+    }
+};
 
     const handleComprar = async (productoId) => {
         const cantidad = cantidadSeleccionada[productoId] || 1;
