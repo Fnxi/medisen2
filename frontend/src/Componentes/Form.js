@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import InputField from "./InputFields";
 import SelectField from "./SelectField";
 import Submit_Button from "./SubmitButton";
@@ -18,6 +19,7 @@ function Formulario({ closeModal, onLoginSuccess }) {
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,37 +54,77 @@ function Formulario({ closeModal, onLoginSuccess }) {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
+        setIsLoading(true);
         try {
             if (isLogin) {
-                // Enviar datos de inicio de sesión
                 const response = await axios.post("https://medisen2-pj7q.vercel.app/api/login", {
                     email: formData.email,
                     password: formData.password
                 });
 
-                if (response.status === 200 && response.data.success) {
-                    alert(response.data.message || "Credenciales incorrectas");
-                    onLoginSuccess(response.data.user); // ✅ Llamada para actualizar el estado en App.js
+                if (response.data.success) {
+                    onLoginSuccess(response.data.user);
+                    closeModal();
                 } else {
                    alert(response.data.message || "Credenciales incorrectas");
                 }
             } else {
-                // Enviar datos de registro
                 await axios.post("https://medisen2-pj7q.vercel.app/api/registrar", formData);
                 alert("Registro exitoso. Ahora puedes iniciar sesión.");
-                setIsLogin(true); // Cambiar a formulario de login
+                setIsLogin(true);
             }
         } catch (error) {
             console.error("Error en la autenticación:", error);
-            alert("Hubo un error, por favor intenta de nuevo.");
+            alert(error.response?.data?.message || "Hubo un error, por favor intenta de nuevo.");
+        } finally {
+            setIsLoading(false);
         }
     }
-};
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        "https://medisen2-pj7q.vercel.app/api/google-login", 
+        { token: credentialResponse.credential }
+      );
+
+      if (response.data.success) {
+        onLoginSuccess(response.data.user);
+        closeModal();
+      } else {
+        alert(response.data.message || "Error en autenticación con Google");
+      }
+    } catch (error) {
+      console.error("Error Google Login:", error);
+      alert("Error al iniciar sesión con Google");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div style={styles.modalOverlay}>
       <div style={styles.modal}>
         <h2 style={styles.title}>{isLogin ? "Iniciar Sesión" : "Registro"}</h2>
+        
+        {/* Añadido: Botón de Google */}
+        <GoogleOAuthProvider clientId="326746217948-gtj4m7bbops3nu76ouakb1av8kpn14e1.apps.googleusercontent.com">
+          <div style={styles.googleButtonContainer}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert('Error al iniciar con Google')}
+              text="continue_with"
+              shape="pill"
+              size="large"
+              width="350"
+            />
+          </div>
+        </GoogleOAuthProvider>
+
+        <div style={styles.divider}>o</div>
+
         <form onSubmit={handleSubmit} style={styles.form}>
           {!isLogin && (
             <>
@@ -106,10 +148,17 @@ function Formulario({ closeModal, onLoginSuccess }) {
           <InputField label="Contraseña" name="password" type="password" value={formData.password} onChange={handleChange} />
           {errors.password && <p style={styles.error}>{errors.password}</p>}
 
-          <Submit_Button text={isLogin ? "Iniciar Sesión" : "Registrarse"} />
+          <Submit_Button 
+            text={isLoading ? (isLogin ? "Iniciando sesión..." : "Registrando...") : (isLogin ? "Iniciar Sesión" : "Registrarse")} 
+            disabled={isLoading}
+          />
         </form>
 
-        <button onClick={() => setIsLogin(!isLogin)} style={styles.toggleButton}>
+        <button 
+          onClick={() => setIsLogin(!isLogin)} 
+          style={styles.toggleButton}
+          disabled={isLoading}
+        >
           {isLogin ? "Crear cuenta" : "Iniciar sesión"}
         </button>
         <button style={styles.closeButton} onClick={closeModal}>X</button> 
@@ -137,6 +186,7 @@ const styles = {
     borderRadius: "10px",
     width: "400px",
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    position: "relative"
   },
   title: {
     textAlign: "center",
@@ -161,7 +211,9 @@ const styles = {
     cursor: "pointer",
   },
   closeButton: {
-    marginTop: "10px",
+    position: "absolute",
+    top: "10px",
+    right: "10px",
     backgroundColor: "#dc3545",
     color: "white",
     padding: "10px",
@@ -169,6 +221,32 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
   },
+  // Estilos añadidos para Google Login
+  googleButtonContainer: {
+    display: "flex",
+    justifyContent: "center",
+    margin: "15px 0"
+  },
+  divider: {
+    textAlign: "center",
+    margin: "15px 0",
+    color: "#666",
+    position: "relative",
+    "&::before, &::after": {
+      content: '""',
+      position: "absolute",
+      top: "50%",
+      width: "45%",
+      height: "1px",
+      backgroundColor: "#ddd"
+    },
+    "&::before": {
+      left: 0
+    },
+    "&::after": {
+      right: 0
+    }
+  }
 };
 
 export default Formulario;
