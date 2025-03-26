@@ -19,6 +19,90 @@ const db = mysql.createPool({
     queueLimit: 0                     // Límite de solicitudes en cola
 });
 
+// En tus imports al inicio del archivo, añade:
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client('326746217948-gtj4m7bbops3nu76ouakb1av8kpn14e1.apps.googleusercontent.com');
+
+// Luego, en tus rutas, añade este nuevo endpoint:
+app.post("/api/google-login", (req, res) => {
+    const { token } = req.body;
+    
+    if (!token) {
+        return res.status(400).json({ success: false, message: 'Token no proporcionado' });
+    }
+
+    googleClient.verifyIdToken({
+        idToken: token,
+        audience: '326746217948-gtj4m7bbops3nu76ouakb1av8kpn14e1.apps.googleusercontent.com'
+    }).then(ticket => {
+        const payload = ticket.getPayload();
+        const { email, name } = payload; // Solo obtenemos email y nombre
+
+        // 1. Verificar si el usuario ya existe
+        db.query("SELECT * FROM usuarios WHERE email = ?", [email], (err, results) => {
+            if (err) {
+                console.error('Error en consulta SQL:', err);
+                return res.status(500).json({ success: false, message: 'Error en base de datos' });
+            }
+
+            if (results.length > 0) {
+                // Usuario existe - actualizar estado
+                const user = results[0];
+                db.query("UPDATE usuarios SET status = 1 WHERE id = ?", [user.id], (updateErr) => {
+                    if (updateErr) {
+                        console.error('Error al actualizar estado:', updateErr);
+                        return res.status(500).json({ success: false, message: 'Error al actualizar usuario' });
+                    }
+                    
+                    // Devuelve los datos básicos del usuario
+                    const userData = {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email
+                        // ... otros campos que ya tengas en tu tabla
+                    };
+                    
+                    res.json({ success: true, user: userData });
+                });
+            } else {
+                // 2. Crear nuevo usuario (sin avatar ni auth_provider)
+                const newUser = {
+                    name: name,
+                    email: email,
+                    password: '', // Campo vacío para usuarios de Google
+                    status: 1,
+                    // ... otros campos requeridos con valores por defecto
+                    age: 0,
+                    birthDate: new Date().toISOString().split('T')[0],
+                    birthPlace: 'Desconocido',
+                    gender: 'Otro',
+                    civilStatus: 'Soltero/a'
+                };
+                
+                db.query("INSERT INTO usuarios SET ?", newUser, (insertErr, result) => {
+                    if (insertErr) {
+                        console.error('Error al crear usuario:', insertErr);
+                        return res.status(500).json({ success: false, message: 'Error al registrar usuario' });
+                    }
+                    
+                    res.json({ 
+                        success: true,
+                        user: {
+                            id: result.insertId,
+                            name: name,
+                            email: email
+                            // ... otros campos básicos
+                        }
+                    });
+                });
+            }
+        });
+    }).catch(error => {
+        console.error('Error verificación Google:', error);
+        res.status(401).json({ success: false, message: 'Token de Google inválido' });
+    });
+});
+
 // Obtener productos
 app.get("/api/productos", (req, res) => {
     db.query("SELECT * FROM productos", (err, result) => {
@@ -29,6 +113,8 @@ app.get("/api/productos", (req, res) => {
         }
     });
 });
+
+
 
 // Ruta de registro
 app.post("/api/registrar", (req, res) => {
