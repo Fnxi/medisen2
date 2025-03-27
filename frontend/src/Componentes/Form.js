@@ -9,7 +9,6 @@ function Formulario({ closeModal, onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
-    age: "",
     email: "",
     birthDate: "",
     birthPlace: "",
@@ -39,7 +38,6 @@ function Formulario({ closeModal, onLoginSuccess }) {
 
     if (!isLogin) {
       if (!formData.name.trim()) newErrors.name = "El nombre es requerido.";
-      if (!formData.age || formData.age <= 0) newErrors.age = "Edad inválida.";
       if (!formData.birthDate.trim()) newErrors.birthDate = "Fecha requerida.";
       if (!formData.birthPlace.trim()) newErrors.birthPlace = "Lugar requerido.";
       if (!formData.gender.trim()) newErrors.gender = "Género requerido.";
@@ -130,8 +128,6 @@ function Formulario({ closeModal, onLoginSuccess }) {
             <>
               <InputField label="Nombre" name="name" type="text" value={formData.name} onChange={handleChange} />
               {errors.name && <p style={styles.error}>{errors.name}</p>}
-              <InputField label="Edad" name="age" type="number" value={formData.age} onChange={handleChange} />
-              {errors.age && <p style={styles.error}>{errors.age}</p>}
               <InputField label="Fecha de Nacimiento" name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} />
               {errors.birthDate && <p style={styles.error}>{errors.birthDate}</p>}
               <InputField label="Entidad de Nacimiento" name="birthPlace" type="text" value={formData.birthPlace} onChange={handleChange} />
@@ -221,7 +217,6 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
   },
-  // Estilos añadidos para Google Login
   googleButtonContainer: {
     display: "flex",
     justifyContent: "center",
