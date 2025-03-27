@@ -47,19 +47,19 @@ app.post("/api/google-login", (req, res) => {
                 });
             } else {
                 // 2. Crear nuevo usuario con valores por defecto
-                const newUser = {
-                    name: name || 'Usuario Google', // Nombre de Google o valor por defecto
-                    email: email,
-                    age: 0, // Valor por defecto
-                    birthDate: '2000-01-01', // Fecha por defecto
-                    birthPlace: 'Desconocido', // Valor por defecto
-                    gender: 'Otro', // Valor por defecto para enum
-                    civilStatus: 'Soltero/a', // Valor por defecto para enum
-                    password: '', // Contraseña vacía
-                    user: 1, // Valor por defecto según tu estructura
-                    token: '0', // Valor por defecto según tu estructura
-                    status: 1 // Usuario activo
-                };
+                // Dentro de /api/google-login, en la parte de crear nuevo usuario:
+const newUser = {
+    name: name || 'Usuario Google', // Nombre de Google o valor por defecto
+    email: email,
+    birthDate: '2000-01-01', // Fecha por defecto
+    birthPlace: 'Desconocido', // Valor por defecto
+    gender: 'Otro', // Valor por defecto para enum
+    civilStatus: 'Soltero/a', // Valor por defecto para enum
+    password: '', // Contraseña vacía
+    user: 1, // Valor por defecto según tu estructura
+    token: '0', // Valor por defecto según tu estructura
+    status: 1 // Usuario activo
+};
                 
                 db.query("INSERT INTO usuarios SET ?", newUser, (insertErr, result) => {
                     if (insertErr) return res.status(500).json({ success: false, message: 'Error al registrar usuario' });
@@ -95,7 +95,7 @@ app.get("/api/productos", (req, res) => {
 
 // Ruta de registro
 app.post("/api/registrar", (req, res) => {
-    const { name, age, email, birthDate, birthPlace, gender, civilStatus, password } = req.body;
+    const { name, email, birthDate, birthPlace, gender, civilStatus, password } = req.body;
 
     if (!password) {
         return res.status(400).send("La contraseña es requerida");
@@ -107,8 +107,8 @@ app.post("/api/registrar", (req, res) => {
             return res.status(500).send("Error al registrar usuario (bcrypt)");
         }
 
-        const query = "INSERT INTO usuarios (name, age, email, birthDate, birthPlace, gender, civilStatus, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        const values = [name, age, email, birthDate, birthPlace, gender, civilStatus, hashedPassword];
+        const query = "INSERT INTO usuarios (name, email, birthDate, birthPlace, gender, civilStatus, password) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        const values = [name, email, birthDate, birthPlace, gender, civilStatus, hashedPassword];
 
         db.query(query, values, (err, result) => {
             if (err) {
@@ -354,19 +354,19 @@ app.post("/api/guardar-compra", async (req, res) => {
 // Ruta para actualizar un usuario
 app.put("/api/usuarios/:id", (req, res) => {
     const { id } = req.params;
-    const { name, age, email, birthDate, birthPlace, gender, civilStatus } = req.body;
+    const { name, email, birthDate, birthPlace, gender, civilStatus } = req.body;
 
     // Validar que los datos estén presentes
-    if (!name || !age || !email || !birthDate || !birthPlace || !gender || !civilStatus) {
+    if (!name || !email || !birthDate || !birthPlace || !gender || !civilStatus) {
         return res.status(400).json({ success: false, message: "Faltan datos requeridos" });
     }
 
     const query = `
         UPDATE usuarios
-        SET name = ?, age = ?, email = ?, birthDate = ?, birthPlace = ?, gender = ?, civilStatus = ?
+        SET name = ?, email = ?, birthDate = ?, birthPlace = ?, gender = ?, civilStatus = ?
         WHERE id = ?
     `;
-    const values = [name, age, email, birthDate, birthPlace, gender, civilStatus, id];
+    const values = [name, email, birthDate, birthPlace, gender, civilStatus, id];
 
     db.query(query, values, (err, result) => {
         if (err) {
