@@ -10,9 +10,9 @@ app.use(cors());
 // Conexión con MySQL (sin `db.connect()`)
 const db = mysql.createPool({
     host: "sql3.freesqldatabase.com", // Host de la base de datos
-    user: "sql3768729",               // Usuario de la base de datos
-    password: "CMszWrHdmU",           // Contraseña de la base de datos
-    database: "sql3768729",           // Nombre de la base de datos
+    user: "sql3769908",               // Usuario de la base de datos
+    password: "lPAFkJTVL7",           // Contraseña de la base de datos
+    database: "sql3769908",           // Nombre de la base de datos
     port: 3306,                       // Puerto de la base de datos
     waitForConnections: true,         // Esperar por conexiones disponibles
     connectionLimit: 10,              // Límite de conexiones
