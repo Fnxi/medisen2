@@ -235,11 +235,11 @@ function App() {
 
  const prepararDatosGrafica = (datos) => {
   return datos.map(medicion => ({
-    fecha: `${medicion.Fecha} ${medicion.Hora}`.substring(0, 16),
-    frecuenciaCardiaca: medicion.Frecuencia_Cardiaca,
-    humedad: medicion.Humedad,
-    presion: medicion.Presion,
-    promedioSalud: medicion.Promedio_Salud
+    fecha: medicion.Fecha ? `${medicion.Fecha} ${medicion.Hora || ''}`.substring(0, 16) : '',
+    Frecuencia_Cardiaca: medicion.Frecuencia_Cardiaca || 0,
+    Humedad: medicion.Humedad || 0,
+    Presion: medicion.Presion || 0,
+    Promedio_Salud: medicion.Promedio_Salud || 0
   }));
 };
 
@@ -677,7 +677,7 @@ const opcionesGrafica = (titulo) => ({
                             <Perfil userData={userData} />
                         )}
 
-        {userType === 3 && datosMedico.length > 0 && (
+      {userType === 3 && datosMedico.length > 0 && (
   <div>
     <h3 className="text-center">Datos del Paciente</h3>
     
@@ -698,7 +698,7 @@ const opcionesGrafica = (titulo) => ({
               <Legend />
               <Line 
                 type="monotone" 
-                dataKey="frecuenciaCardiaca" 
+                dataKey="Frecuencia_Cardiaca" 
                 name="Frecuencia Cardíaca"
                 stroke="#8884d8" 
                 activeDot={{ r: 8 }} 
@@ -722,7 +722,7 @@ const opcionesGrafica = (titulo) => ({
               <Legend />
               <Line 
                 type="monotone" 
-                dataKey="humedad" 
+                dataKey="Humedad" 
                 name="Humedad"
                 stroke="#82ca9d" 
               />
@@ -748,32 +748,9 @@ const opcionesGrafica = (titulo) => ({
               <Legend />
               <Line 
                 type="monotone" 
-                dataKey="presion" 
+                dataKey="Presion" 
                 name="Presión"
                 stroke="#ff7300" 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      <div className="col-md-6">
-        <h4>Promedio de Salud</h4>
-        <div className="card p-3">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={prepararDatosGrafica(datosMedico)}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="fecha" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="promedioSalud" 
-                name="Promedio Salud"
-                stroke="#ff0000" 
               />
             </LineChart>
           </ResponsiveContainer>
@@ -791,18 +768,16 @@ const opcionesGrafica = (titulo) => ({
           <th>Frecuencia Cardíaca</th>
           <th>Humedad</th>
           <th>Presión</th>
-          <th>Promedio Salud</th>
         </tr>
       </thead>
       <tbody>
         {datosMedico.map((medicion, index) => (
           <tr key={index}>
-            <td>{medicion.Fecha}</td>
-            <td>{medicion.Hora}</td>
-            <td>{medicion.Frecuencia_Cardiaca}</td>
-            <td>{medicion.Humedad}</td>
-            <td>{medicion.Presion}</td>
-            <td>{medicion.Promedio_Salud}</td>
+            <td>{medicion.Fecha || 'N/A'}</td>
+            <td>{medicion.Hora || 'N/A'}</td>
+            <td>{medicion.Frecuencia_Cardiaca || 'N/A'}</td>
+            <td>{medicion.Humedad || 'N/A'}</td>
+            <td>{medicion.Presion || 'N/A'}</td>
           </tr>
         ))}
       </tbody>
@@ -811,25 +786,19 @@ const opcionesGrafica = (titulo) => ({
     {/* Formulario de Recetario */}
     <h3 className="text-center mt-4">Formulario de Recetario</h3>
     <form className="mb-5">
-      <div className="row">
-        <div className="col-md-6">
-          <div className="mb-3">
-            <label htmlFor="medicamento" className="form-label">Medicamento</label>
-            <input type="text" className="form-control" id="medicamento" />
-          </div>
-        </div>
-        <div className="col-md-6">
-          <div className="mb-3">
-            <label htmlFor="dosis" className="form-label">Dosis</label>
-            <input type="text" className="form-control" id="dosis" />
-          </div>
-        </div>
+      <div className="mb-3">
+        <label htmlFor="medicamento" className="form-label">Medicamento</label>
+        <input type="text" className="form-control" id="medicamento" />
+      </div>
+      <div className="mb-3">
+        <label htmlFor="dosis" className="form-label">Dosis</label>
+        <input type="text" className="form-control" id="dosis" />
       </div>
       <div className="mb-3">
         <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
         <textarea className="form-control" id="indicaciones" rows="3"></textarea>
       </div>
-      <button type="submit" className="btn btn-primary">Enviar Receta</button>
+      <button type="submit" className="btn btn-primary">Enviar</button>
     </form>
   </div>
 )}
