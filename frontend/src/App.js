@@ -8,6 +8,28 @@ import Perfil from "./Componentes/Perfil";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+// Registrar los componentes necesarios
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 // Importa Firebase y Realtime Database
 import { database, ref, onValue } from './firebase';
@@ -231,6 +253,40 @@ function App() {
             }));
         }
     };
+
+    const prepararDatosGrafica = (datos, campo) => {
+  const labels = datos.map((medicion, index) => 
+    `${medicion.Fecha} ${medicion.Hora}`.substring(0, 16)
+  );
+  
+  const data = datos.map(medicion => medicion[campo]);
+  
+  return {
+    labels,
+    datasets: [
+      {
+        label: campo.replace('_', ' '),
+        data,
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+        tension: 0.1
+      }
+    ]
+  };
+};
+
+const opcionesGrafica = (titulo) => ({
+  responsive: true,
+  plugins: {
+    legend: {
+      position: 'top',
+    },
+    title: {
+      display: true,
+      text: titulo,
+    },
+  },
+});
 
     const handleLogout = async () => {
     try {
@@ -653,49 +709,105 @@ function App() {
                             <Perfil userData={userData} />
                         )}
 
-                      {userType === 3 && datosMedico.length > 0 && (
-    <div>
-        <h3 className="text-center">Datos del Paciente</h3>
-        <table className="table table-striped">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Frecuencia Cardíaca</th>
-                    <th>Humedad</th>
-                    <th>Presión</th>
-                </tr>
-            </thead>
-            <tbody>
-                {datosMedico.map((medicion, index) => (
-                    <tr key={index}>
-                        <td>{medicion.Fecha}</td>
-                        <td>{medicion.Hora}</td>
-                        <td>{medicion.Frecuencia_Cardiaca}</td>
-                        <td>{medicion.Humedad}</td>
-                        <td>{medicion.Presion}</td>
-                    </tr>
-                ))}
-            </tbody>
-                                </table>
-                                <h3 className="text-center">Formulario de Recetario</h3>
-                                <form>
-                                    <div className="mb-3">
-                                        <label htmlFor="medicamento" className="form-label">Medicamento</label>
-                                        <input type="text" className="form-control" id="medicamento" />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="dosis" className="form-label">Dosis</label>
-                                        <input type="text" className="form-control" id="dosis" />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
-                                        <textarea className="form-control" id="indicaciones" rows="3"></textarea>
-                                    </div>
-                                    <button type="submit" className="btn btn-primary">Enviar</button>
-                                </form>
-                            </div>
-                        )}
+           {userType === 3 && datosMedico.length > 0 && (
+  <div>
+    <h3 className="text-center">Datos del Paciente</h3>
+    
+    {/* Gráficas de histórico */}
+    <div className="row mt-4">
+      <div className="col-md-6">
+        <h4>Frecuencia Cardíaca</h4>
+        <div className="card p-3">
+          <Line 
+            data={prepararDatosGrafica(datosMedico, 'Frecuencia_Cardiaca')} 
+            options={opcionesGrafica('Histórico de Frecuencia Cardíaca')}
+          />
+        </div>
+      </div>
+      <div className="col-md-6">
+        <h4>Humedad</h4>
+        <div className="card p-3">
+          <Line 
+            data={prepararDatosGrafica(datosMedico, 'Humedad')} 
+            options={opcionesGrafica('Histórico de Humedad')}
+          />
+        </div>
+      </div>
+    </div>
+    
+    <div className="row mt-4">
+      <div className="col-md-6">
+        <h4>Presión Arterial</h4>
+        <div className="card p-3">
+          <Line 
+            data={prepararDatosGrafica(datosMedico, 'Presion')} 
+            options={opcionesGrafica('Histórico de Presión Arterial')}
+          />
+        </div>
+      </div>
+      <div className="col-md-6">
+        <h4>Promedio de Salud</h4>
+        <div className="card p-3">
+          <Line 
+            data={prepararDatosGrafica(datosMedico, 'Promedio_Salud')} 
+            options={opcionesGrafica('Histórico de Promedio de Salud')}
+          />
+        </div>
+      </div>
+    </div>
+
+    {/* Tabla de datos */}
+    <h4 className="mt-4">Detalle de Mediciones</h4>
+    <table className="table table-striped">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Hora</th>
+          <th>Frecuencia Cardíaca</th>
+          <th>Humedad</th>
+          <th>Presión</th>
+          <th>Promedio Salud</th>
+        </tr>
+      </thead>
+      <tbody>
+        {datosMedico.map((medicion, index) => (
+          <tr key={index}>
+            <td>{medicion.Fecha}</td>
+            <td>{medicion.Hora}</td>
+            <td>{medicion.Frecuencia_Cardiaca}</td>
+            <td>{medicion.Humedad}</td>
+            <td>{medicion.Presion}</td>
+            <td>{medicion.Promedio_Salud}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    {/* Formulario de Recetario */}
+    <h3 className="text-center mt-4">Formulario de Recetario</h3>
+    <form className="mb-5">
+      <div className="row">
+        <div className="col-md-6">
+          <div className="mb-3">
+            <label htmlFor="medicamento" className="form-label">Medicamento</label>
+            <input type="text" className="form-control" id="medicamento" />
+          </div>
+        </div>
+        <div className="col-md-6">
+          <div className="mb-3">
+            <label htmlFor="dosis" className="form-label">Dosis</label>
+            <input type="text" className="form-control" id="dosis" />
+          </div>
+        </div>
+      </div>
+      <div className="mb-3">
+        <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
+        <textarea className="form-control" id="indicaciones" rows="3"></textarea>
+      </div>
+      <button type="submit" className="btn btn-primary">Enviar Receta</button>
+    </form>
+  </div>
+)}
                     </>
                 )}
 
