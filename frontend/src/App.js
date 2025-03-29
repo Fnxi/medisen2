@@ -8,7 +8,6 @@ import Perfil from "./Componentes/Perfil";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Importa Firebase y Realtime Database
 import { database, ref, onValue } from './firebase';
@@ -233,28 +232,9 @@ function App() {
         }
     };
 
- const prepararDatosGrafica = (datos) => {
-  return datos.map(medicion => ({
-    fecha: medicion.Fecha ? `${medicion.Fecha} ${medicion.Hora || ''}`.substring(0, 16) : '',
-    Frecuencia_Cardiaca: medicion.Frecuencia_Cardiaca || 0,
-    Humedad: medicion.Humedad || 0,
-    Presion: medicion.Presion || 0,
-    Promedio_Salud: medicion.Promedio_Salud || 0
-  }));
-};
 
-const opcionesGrafica = (titulo) => ({
-  responsive: true,
-  plugins: {
-    legend: {
-      position: 'top',
-    },
-    title: {
-      display: true,
-      text: titulo,
-    },
-  },
-});
+
+
 
     const handleLogout = async () => {
     try {
@@ -357,13 +337,30 @@ const opcionesGrafica = (titulo) => ({
         }
     };
 
+  
+
     const generarDatosGraficoMedico = () => {
-        return datosMedico.map((medicion, index) => ({
-            title: `Medición ${index + 1}`,
-            value: medicion.Promedio_Salud,
-            color: colores[index % colores.length]
-        }));
+  if (!datosMedico || !Array.isArray(datosMedico)) return [];
+  
+  // Usamos solo las últimas 5 mediciones para no saturar el gráfico
+  const ultimasMediciones = datosMedico.slice(-5);
+  
+  return ultimasMediciones.map((medicion, index) => {
+    // Calculamos un promedio simple si no existe el campo
+    const promedio = (
+      (Number(medicion.Frecuencia_Cardiaca || 0) + 
+       Number(medicion.Humedad || 0) + 
+       Number(medicion.Presion || 0)) / 3
+    ).toFixed(1);
+
+    return {
+      title: `Med ${index + 1}`,
+      value: promedio,
+      color: colores[index % colores.length],
+      fecha: medicion.Fecha || 'Sin fecha'
     };
+  });
+};
 
     return (
         <div className="container-fluid">
@@ -677,140 +674,116 @@ const opcionesGrafica = (titulo) => ({
                             <Perfil userData={userData} />
                         )}
 
- {userType === 3 && (
+{userType === 3 && (
   <div>
     <h3 className="text-center">Datos del Paciente</h3>
     
-    {/* Mostrar mensaje si no hay datos */}
-    {datosMedico.length === 0 && (
+    {datosMedico.length === 0 ? (
       <div className="alert alert-info text-center">
         No hay datos médicos disponibles para mostrar.
       </div>
-    )}
-
-    {/* Renderizar gráficas solo si hay datos */}
-    {datosMedico.length > 0 && (
+    ) : (
       <>
         <div className="row mt-4">
-          <div className="col-md-6">
-            <h4>Frecuencia Cardíaca</h4>
-            <div className="card p-3">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart
-                  data={prepararDatosGrafica(datosMedico)}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="fecha" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Frecuencia_Cardiaca" 
-                    name="Frecuencia Cardíaca"
-                    stroke="#8884d8" 
-                    activeDot={{ r: 8 }} 
+          <div className="col-md-6 mx-auto">
+            <div className="card">
+              <div className="card-body">
+                <h4 className="card-title text-center">Distribución de Mediciones</h4>
+                <div style={{ height: '300px' }}>
+                  <PieChart
+                    data={[
+                      {
+                        title: 'Frecuencia Cardíaca',
+                        value: datosMedico[0]?.Frecuencia_Cardiaca || 0,
+                        color: '#FF6384'
+                      },
+                      {
+                        title: 'Humedad',
+                        value: datosMedico[0]?.Humedad || 0,
+                        color: '#36A2EB'
+                      },
+                      {
+                        title: 'Presión',
+                        value: datosMedico[0]?.Presion || 0,
+                        color: '#FFCE56'
+                      }
+                    ]}
+                    label={({ dataEntry }) => `${dataEntry.title}: ${dataEntry.value}`}
+                    labelStyle={{
+                      fontSize: '7px',
+                      fontFamily: 'sans-serif',
+                    }}
+                    animate
                   />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <h4>Humedad</h4>
-            <div className="card p-3">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart
-                  data={prepararDatosGrafica(datosMedico)}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="fecha" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Humedad" 
-                    name="Humedad"
-                    stroke="#82ca9d" 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-        
-        <div className="row mt-4">
-          <div className="col-md-6">
-            <h4>Presión Arterial</h4>
-            <div className="card p-3">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart
-                  data={prepararDatosGrafica(datosMedico)}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="fecha" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Presion" 
-                    name="Presión"
-                    stroke="#ff7300" 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+                </div>
+                <p className="text-muted text-center mt-2">
+                  Última medición: {datosMedico[0]?.Fecha || 'Fecha no disponible'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabla de datos */}
-        <h4 className="mt-4">Detalle de Mediciones</h4>
-        <table className="table table-striped">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Frecuencia Cardíaca</th>
-              <th>Humedad</th>
-              <th>Presión</th>
-            </tr>
-          </thead>
-          <tbody>
-            {datosMedico.map((medicion, index) => (
-              <tr key={index}>
-                <td>{medicion.Fecha || 'N/A'}</td>
-                <td>{medicion.Hora || 'N/A'}</td>
-                <td>{medicion.Frecuencia_Cardiaca || 'N/A'}</td>
-                <td>{medicion.Humedad || 'N/A'}</td>
-                <td>{medicion.Presion || 'N/A'}</td>
+        {/* Tabla de datos completa */}
+        <h4 className="mt-4 text-center">Historial de Mediciones</h4>
+        <div className="table-responsive">
+          <table className="table table-striped table-hover">
+            <thead className="table-dark">
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Frec. Cardíaca</th>
+                <th>Humedad</th>
+                <th>Presión</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {datosMedico.map((medicion, index) => (
+                <tr key={index}>
+                  <td>{medicion.Fecha || 'N/D'}</td>
+                  <td>{medicion.Hora || 'N/D'}</td>
+                  <td>{medicion.Frecuencia_Cardiaca || 'N/D'}</td>
+                  <td>{medicion.Humedad || 'N/D'}</td>
+                  <td>{medicion.Presion || 'N/D'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </>
     )}
 
-    {/* Formulario de Recetario (siempre visible) */}
-    <h3 className="text-center mt-4">Formulario de Recetario</h3>
-    <form className="mb-5">
-      <div className="mb-3">
-        <label htmlFor="medicamento" className="form-label">Medicamento</label>
-        <input type="text" className="form-control" id="medicamento" />
+    {/* Formulario de Recetario simplificado */}
+    <div className="card mt-4">
+      <div className="card-body">
+        <h3 className="card-title text-center">Recetario Médico</h3>
+        <form>
+          <div className="row">
+            <div className="col-md-6">
+              <div className="mb-3">
+                <label className="form-label">Medicamento</label>
+                <input type="text" className="form-control" required />
+              </div>
+            </div>
+            <div className="col-md-6">
+              <div className="mb-3">
+                <label className="form-label">Dosis</label>
+                <input type="text" className="form-control" required />
+              </div>
+            </div>
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Indicaciones</label>
+            <textarea className="form-control" rows="3" required></textarea>
+          </div>
+          <div className="text-center">
+            <button type="submit" className="btn btn-primary">
+              <i className="fas fa-paper-plane me-2"></i>Enviar Receta
+            </button>
+          </div>
+        </form>
       </div>
-      <div className="mb-3">
-        <label htmlFor="dosis" className="form-label">Dosis</label>
-        <input type="text" className="form-control" id="dosis" />
-      </div>
-      <div className="mb-3">
-        <label htmlFor="indicaciones" className="form-label">Indicaciones</label>
-        <textarea className="form-control" id="indicaciones" rows="3"></textarea>
-      </div>
-      <button type="submit" className="btn btn-primary">Enviar</button>
-    </form>
+    </div>
   </div>
 )}
                     </>
