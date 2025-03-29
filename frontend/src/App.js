@@ -8,28 +8,7 @@ import Perfil from "./Componentes/Perfil";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-
-// Registrar los componentes necesarios
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Importa Firebase y Realtime Database
 import { database, ref, onValue } from './firebase';
@@ -254,25 +233,14 @@ function App() {
         }
     };
 
-    const prepararDatosGrafica = (datos, campo) => {
-  const labels = datos.map((medicion, index) => 
-    `${medicion.Fecha} ${medicion.Hora}`.substring(0, 16)
-  );
-  
-  const data = datos.map(medicion => medicion[campo]);
-  
-  return {
-    labels,
-    datasets: [
-      {
-        label: campo.replace('_', ' '),
-        data,
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-        tension: 0.1
-      }
-    ]
-  };
+ const prepararDatosGrafica = (datos) => {
+  return datos.map(medicion => ({
+    fecha: `${medicion.Fecha} ${medicion.Hora}`.substring(0, 16),
+    frecuenciaCardiaca: medicion.Frecuencia_Cardiaca,
+    humedad: medicion.Humedad,
+    presion: medicion.Presion,
+    promedioSalud: medicion.Promedio_Salud
+  }));
 };
 
 const opcionesGrafica = (titulo) => ({
@@ -709,7 +677,7 @@ const opcionesGrafica = (titulo) => ({
                             <Perfil userData={userData} />
                         )}
 
-           {userType === 3 && datosMedico.length > 0 && (
+        {userType === 3 && datosMedico.length > 0 && (
   <div>
     <h3 className="text-center">Datos del Paciente</h3>
     
@@ -718,19 +686,48 @@ const opcionesGrafica = (titulo) => ({
       <div className="col-md-6">
         <h4>Frecuencia Cardíaca</h4>
         <div className="card p-3">
-          <Line 
-            data={prepararDatosGrafica(datosMedico, 'Frecuencia_Cardiaca')} 
-            options={opcionesGrafica('Histórico de Frecuencia Cardíaca')}
-          />
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={prepararDatosGrafica(datosMedico)}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="fecha" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="frecuenciaCardiaca" 
+                name="Frecuencia Cardíaca"
+                stroke="#8884d8" 
+                activeDot={{ r: 8 }} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
       <div className="col-md-6">
         <h4>Humedad</h4>
         <div className="card p-3">
-          <Line 
-            data={prepararDatosGrafica(datosMedico, 'Humedad')} 
-            options={opcionesGrafica('Histórico de Humedad')}
-          />
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={prepararDatosGrafica(datosMedico)}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="fecha" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="humedad" 
+                name="Humedad"
+                stroke="#82ca9d" 
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
@@ -739,19 +736,47 @@ const opcionesGrafica = (titulo) => ({
       <div className="col-md-6">
         <h4>Presión Arterial</h4>
         <div className="card p-3">
-          <Line 
-            data={prepararDatosGrafica(datosMedico, 'Presion')} 
-            options={opcionesGrafica('Histórico de Presión Arterial')}
-          />
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={prepararDatosGrafica(datosMedico)}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="fecha" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="presion" 
+                name="Presión"
+                stroke="#ff7300" 
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
       <div className="col-md-6">
         <h4>Promedio de Salud</h4>
         <div className="card p-3">
-          <Line 
-            data={prepararDatosGrafica(datosMedico, 'Promedio_Salud')} 
-            options={opcionesGrafica('Histórico de Promedio de Salud')}
-          />
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart
+              data={prepararDatosGrafica(datosMedico)}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="fecha" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="promedioSalud" 
+                name="Promedio Salud"
+                stroke="#ff0000" 
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>
