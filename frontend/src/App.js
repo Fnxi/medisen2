@@ -677,113 +677,124 @@ const opcionesGrafica = (titulo) => ({
                             <Perfil userData={userData} />
                         )}
 
-      {userType === 3 && datosMedico.length > 0 && (
+ {userType === 3 && (
   <div>
     <h3 className="text-center">Datos del Paciente</h3>
     
-    {/* Gráficas de histórico */}
-    <div className="row mt-4">
-      <div className="col-md-6">
-        <h4>Frecuencia Cardíaca</h4>
-        <div className="card p-3">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={prepararDatosGrafica(datosMedico)}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="fecha" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="Frecuencia_Cardiaca" 
-                name="Frecuencia Cardíaca"
-                stroke="#8884d8" 
-                activeDot={{ r: 8 }} 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+    {/* Mostrar mensaje si no hay datos */}
+    {datosMedico.length === 0 && (
+      <div className="alert alert-info text-center">
+        No hay datos médicos disponibles para mostrar.
       </div>
-      <div className="col-md-6">
-        <h4>Humedad</h4>
-        <div className="card p-3">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={prepararDatosGrafica(datosMedico)}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="fecha" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="Humedad" 
-                name="Humedad"
-                stroke="#82ca9d" 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
-    
-    <div className="row mt-4">
-      <div className="col-md-6">
-        <h4>Presión Arterial</h4>
-        <div className="card p-3">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={prepararDatosGrafica(datosMedico)}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="fecha" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="Presion" 
-                name="Presión"
-                stroke="#ff7300" 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
+    )}
 
-    {/* Tabla de datos */}
-    <h4 className="mt-4">Detalle de Mediciones</h4>
-    <table className="table table-striped">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>Frecuencia Cardíaca</th>
-          <th>Humedad</th>
-          <th>Presión</th>
-        </tr>
-      </thead>
-      <tbody>
-        {datosMedico.map((medicion, index) => (
-          <tr key={index}>
-            <td>{medicion.Fecha || 'N/A'}</td>
-            <td>{medicion.Hora || 'N/A'}</td>
-            <td>{medicion.Frecuencia_Cardiaca || 'N/A'}</td>
-            <td>{medicion.Humedad || 'N/A'}</td>
-            <td>{medicion.Presion || 'N/A'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    {/* Renderizar gráficas solo si hay datos */}
+    {datosMedico.length > 0 && (
+      <>
+        <div className="row mt-4">
+          <div className="col-md-6">
+            <h4>Frecuencia Cardíaca</h4>
+            <div className="card p-3">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart
+                  data={prepararDatosGrafica(datosMedico)}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="fecha" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Frecuencia_Cardiaca" 
+                    name="Frecuencia Cardíaca"
+                    stroke="#8884d8" 
+                    activeDot={{ r: 8 }} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <h4>Humedad</h4>
+            <div className="card p-3">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart
+                  data={prepararDatosGrafica(datosMedico)}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="fecha" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Humedad" 
+                    name="Humedad"
+                    stroke="#82ca9d" 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+        
+        <div className="row mt-4">
+          <div className="col-md-6">
+            <h4>Presión Arterial</h4>
+            <div className="card p-3">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart
+                  data={prepararDatosGrafica(datosMedico)}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="fecha" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Presion" 
+                    name="Presión"
+                    stroke="#ff7300" 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
 
-    {/* Formulario de Recetario */}
+        {/* Tabla de datos */}
+        <h4 className="mt-4">Detalle de Mediciones</h4>
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Frecuencia Cardíaca</th>
+              <th>Humedad</th>
+              <th>Presión</th>
+            </tr>
+          </thead>
+          <tbody>
+            {datosMedico.map((medicion, index) => (
+              <tr key={index}>
+                <td>{medicion.Fecha || 'N/A'}</td>
+                <td>{medicion.Hora || 'N/A'}</td>
+                <td>{medicion.Frecuencia_Cardiaca || 'N/A'}</td>
+                <td>{medicion.Humedad || 'N/A'}</td>
+                <td>{medicion.Presion || 'N/A'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    )}
+
+    {/* Formulario de Recetario (siempre visible) */}
     <h3 className="text-center mt-4">Formulario de Recetario</h3>
     <form className="mb-5">
       <div className="mb-3">
