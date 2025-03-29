@@ -110,10 +110,12 @@ function App() {
                 const medicionesRef = ref(database, 'Clientes/cliente_123/Mediciones/');
                 onValue(medicionesRef, (snapshot) => {
                     const data = snapshot.val();
+                    console.log("Datos crudos de Firebase:", data);
                     const datos = [];
                     for (let id in data) {
                         datos.push(data[id]);
                     }
+                    console.log("Datos procesados (datosMedico):", datos); 
                     setDatosMedico(datos);
                 });
             }
@@ -677,6 +679,7 @@ function App() {
 {userType === 3 && (
   <div>
     <h3 className="text-center">Datos del Paciente</h3>
+        {console.log("Datos médicos en render:", datosMedico)}
     
     {datosMedico.length === 0 ? (
       <div className="alert alert-info text-center">
