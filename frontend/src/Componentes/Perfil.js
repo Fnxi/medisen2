@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 
 const Perfil = ({ userData }) => {
     const [editar, setEditar] = useState(false);
-    const [datosUsuario, setDatosUsuario] = useState(userData);
+    const [datosUsuario, setDatosUsuario] = useState(null); // Cambiado a null inicial
     const [compras, setCompras] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [datosFiscales, setDatosFiscales] = useState({
@@ -33,9 +33,20 @@ const Perfil = ({ userData }) => {
                         ...datosUsuarioRes.data.usuario,
                         age: vistaUsuarioRes.data.usuario.edad
                     });
+                } else {
+                    // Si falla la API, usar los datos del login como respaldo
+                    setDatosUsuario({
+                        ...userData,
+                        age: calcularEdad(userData.birthDate) // Función para calcular edad si es necesario
+                    });
                 }
             } catch (error) {
                 console.error("Error al obtener datos del perfil:", error);
+                // Usar datos del login como respaldo
+                setDatosUsuario({
+                    ...userData,
+                    age: calcularEdad(userData.birthDate)
+                });
             } finally {
                 setCargando(prev => ({ ...prev, perfil: false }));
             }
@@ -43,6 +54,19 @@ const Perfil = ({ userData }) => {
 
         obtenerDatosPerfil();
     }, [userData.id]);
+
+    // Función para calcular edad si es necesario
+    const calcularEdad = (fechaNacimiento) => {
+        if (!fechaNacimiento) return null;
+        const nacimiento = new Date(fechaNacimiento);
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+            edad--;
+        }
+        return edad;
+    };
 
     // Obtener las compras del usuario
     useEffect(() => {
