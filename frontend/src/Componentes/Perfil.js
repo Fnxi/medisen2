@@ -13,6 +13,36 @@ const Perfil = ({ userData }) => {
         direccionFiscal: "",
     });
     const [compraSeleccionada, setCompraSeleccionada] = useState(null);
+    const [cargando, setCargando] = useState({
+        perfil: true,
+        compras: true
+    });
+
+    // Obtener datos del perfil (incluyendo edad calculada)
+    useEffect(() => {
+        const obtenerDatosPerfil = async () => {
+            try {
+                // Obtener datos básicos del usuario
+                const [datosUsuarioRes, vistaUsuarioRes] = await Promise.all([
+                    axios.get(`https://medisen2-pj7q.vercel.app/api/usuarios/${userData.id}`),
+                    axios.get(`https://medisen2-pj7q.vercel.app/api/vista-usuario/${userData.id}`)
+                ]);
+
+                if (datosUsuarioRes.data.success && vistaUsuarioRes.data.success) {
+                    setDatosUsuario({
+                        ...datosUsuarioRes.data.usuario,
+                        age: vistaUsuarioRes.data.usuario.edad
+                    });
+                }
+            } catch (error) {
+                console.error("Error al obtener datos del perfil:", error);
+            } finally {
+                setCargando(prev => ({ ...prev, perfil: false }));
+            }
+        };
+
+        obtenerDatosPerfil();
+    }, [userData.id]);
 
     // Obtener las compras del usuario
     useEffect(() => {
@@ -28,6 +58,8 @@ const Perfil = ({ userData }) => {
                 }
             } catch (error) {
                 console.error("Error al obtener las compras:", error);
+            } finally {
+                setCargando(prev => ({ ...prev, compras: false }));
             }
         };
 
@@ -53,6 +85,17 @@ const Perfil = ({ userData }) => {
             if (response.data.success) {
                 alert("Datos actualizados correctamente.");
                 setEditar(false);
+                
+                // Actualizar la edad desde la vista después de guardar cambios
+                const vistaResponse = await axios.get(
+                    `https://medisen2-pj7q.vercel.app/api/vista-usuario/${userData.id}`
+                );
+                if (vistaResponse.data.success) {
+                    setDatosUsuario(prev => ({
+                        ...prev,
+                        age: vistaResponse.data.usuario.edad
+                    }));
+                }
             } else {
                 alert("Error al actualizar los datos.");
             }
@@ -63,71 +106,73 @@ const Perfil = ({ userData }) => {
     };
 
     // Generar la factura en PDF
-const handleGenerarFactura = (compra) => {
-    if (!compra) {
-        alert("No se ha seleccionado ninguna compra.");
-        return;
+    const handleGenerarFactura = (compra) => {
+        if (!compra) {
+            alert("No se ha seleccionado ninguna compra.");
+            return;
+        }
+
+        const doc = new jsPDF();
+
+        // Encabezado de la factura
+        doc.setFontSize(18);
+        doc.text("Factura", 10, 10);
+        doc.setFontSize(12);
+        doc.text(`Número de compra: ${compra.id}`, 10, 20);
+        doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
+
+        // Datos fiscales
+        doc.text("Datos Fiscales:", 10, 40);
+        doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
+        doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
+        doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
+
+        // Detalles de la compra
+        doc.text("Detalles de la compra:", 10, 80);
+
+        // Crear la tabla manualmente
+        const detalles = JSON.parse(compra.detalles);
+        let y = 90;
+
+        // Encabezados de la tabla
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Cantidad", 10, y);
+        doc.text("Descripción", 40, y);
+        doc.text("Precio Unitario", 100, y);
+        doc.text("Total", 150, y);
+
+        y += 10;
+
+        // Datos de la tabla
+        doc.setFont("helvetica", "normal");
+        detalles.forEach((item) => {
+            const precio = parseFloat(item.precio);
+            const total = item.cantidad * precio;
+
+            doc.text(item.cantidad.toString(), 10, y);
+            doc.text(item.nombre, 40, y);
+            doc.text(`$${precio.toFixed(2)}`, 100, y);
+            doc.text(`$${total.toFixed(2)}`, 150, y);
+            y += 10;
+        });
+
+        // Totales
+        const total = parseFloat(compra.total);
+        const subtotal = total / 1.16;
+        const iva = total - subtotal;
+
+        doc.setFontSize(12);
+        doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, y + 10);
+        doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
+        doc.text(`Total: $${total.toFixed(2)}`, 10, y + 30);
+
+        doc.output("dataurlnewwindow");
+    };
+
+    if (cargando.perfil) {
+        return <div className="container mt-4 text-center">Cargando perfil...</div>;
     }
-
-    const doc = new jsPDF();
-
-    // Encabezado de la factura
-    doc.setFontSize(18);
-    doc.text("Factura", 10, 10);
-    doc.setFontSize(12);
-    doc.text(`Número de compra: ${compra.id}`, 10, 20);
-    doc.text(`Fecha: ${new Date(compra.fecha_compra).toLocaleDateString()}`, 10, 30);
-
-    // Datos fiscales
-    doc.text("Datos Fiscales:", 10, 40);
-    doc.text(`Nombre: ${datosFiscales.nombreFiscal}`, 10, 50);
-    doc.text(`RFC: ${datosFiscales.rfc}`, 10, 60);
-    doc.text(`Dirección: ${datosFiscales.direccionFiscal}`, 10, 70);
-
-    // Detalles de la compra
-    doc.text("Detalles de la compra:", 10, 80);
-
-    // Crear la tabla manualmente
-    const detalles = JSON.parse(compra.detalles);
-    let y = 90; // Posición vertical inicial para la tabla
-
-    // Encabezados de la tabla
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Cantidad", 10, y);
-    doc.text("Descripción", 40, y);
-    doc.text("Precio Unitario", 100, y);
-    doc.text("Total", 150, y);
-
-    y += 10; // Mover la posición hacia abajo para los datos
-
-    // Datos de la tabla
-    doc.setFont("helvetica", "normal");
-    detalles.forEach((item) => {
-        const precio = parseFloat(item.precio); // Convertir precio a número
-        const total = item.cantidad * precio; // Calcular el total
-
-        doc.text(item.cantidad.toString(), 10, y);
-        doc.text(item.nombre, 40, y);
-        doc.text(`$${precio.toFixed(2)}`, 100, y); // Formatear precio con 2 decimales
-        doc.text(`$${total.toFixed(2)}`, 150, y); // Formatear total con 2 decimales
-        y += 10; // Mover la posición hacia abajo para el siguiente producto
-    });
-
-    // Calcular subtotal, IVA y total
-    const total = parseFloat(compra.total); // Convertir total a número
-    const subtotal = total / 1.16;
-    const iva = total - subtotal;
-
-    // Mostrar subtotal, IVA y total
-    doc.setFontSize(12);
-    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 10, y + 10);
-    doc.text(`IVA (16%): $${iva.toFixed(2)}`, 10, y + 20);
-    doc.text(`Total: $${total.toFixed(2)}`, 10, y + 30);
-
-    // Abrir el PDF en una nueva ventana
-    doc.output("dataurlnewwindow");
-};
 
     return (
         <div className="container mt-4">
@@ -137,7 +182,6 @@ const handleGenerarFactura = (compra) => {
                     <h5 className="card-title">Información Personal</h5>
                     {editar ? (
                         <>
-                            {/* Formulario de edición */}
                             <div className="mb-3">
                                 <label htmlFor="name" className="form-label">Nombre</label>
                                 <input
@@ -145,7 +189,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="name"
                                     name="name"
-                                    value={datosUsuario.name}
+                                    value={datosUsuario.name || ''}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -156,7 +200,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="email"
                                     name="email"
-                                    value={datosUsuario.email}
+                                    value={datosUsuario.email || ''}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -167,7 +211,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="age"
                                     name="age"
-                                    value={datosUsuario.age}
+                                    value={datosUsuario.age || ''}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -178,7 +222,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="birthDate"
                                     name="birthDate"
-                                    value={datosUsuario.birthDate.split('T')[0]}
+                                    value={datosUsuario.birthDate ? datosUsuario.birthDate.split('T')[0] : ''}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -189,7 +233,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="birthPlace"
                                     name="birthPlace"
-                                    value={datosUsuario.birthPlace}
+                                    value={datosUsuario.birthPlace || ''}
                                     onChange={handleInputChange}
                                 />
                             </div>
@@ -199,7 +243,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="gender"
                                     name="gender"
-                                    value={datosUsuario.gender}
+                                    value={datosUsuario.gender || 'Otro'}
                                     onChange={handleInputChange}
                                 >
                                     <option value="Masculino">Masculino</option>
@@ -213,7 +257,7 @@ const handleGenerarFactura = (compra) => {
                                     className="form-control"
                                     id="civilStatus"
                                     name="civilStatus"
-                                    value={datosUsuario.civilStatus}
+                                    value={datosUsuario.civilStatus || 'Soltero/a'}
                                     onChange={handleInputChange}
                                 >
                                     <option value="Soltero/a">Soltero/a</option>
@@ -222,61 +266,73 @@ const handleGenerarFactura = (compra) => {
                                     <option value="Viudo/a">Viudo/a</option>
                                 </select>
                             </div>
-                            <button className="btn btn-success me-2" onClick={handleGuardarCambios}>Guardar Cambios</button>
-                            <button className="btn btn-secondary" onClick={() => setEditar(false)}>Cancelar</button>
+                            <button className="btn btn-success me-2" onClick={handleGuardarCambios}>
+                                Guardar Cambios
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => setEditar(false)}>
+                                Cancelar
+                            </button>
                         </>
                     ) : (
                         <>
-                            {/* Vista de solo lectura */}
                             <p className="card-text"><strong>Nombre:</strong> {datosUsuario.name}</p>
                             <p className="card-text"><strong>Email:</strong> {datosUsuario.email}</p>
                             <p className="card-text"><strong>Edad:</strong> {datosUsuario.age}</p>
-                            <p className="card-text"><strong>Fecha de Nacimiento:</strong> {new Date(datosUsuario.birthDate).toLocaleDateString()}</p>
-                            <p className="card-text"><strong>Lugar de Nacimiento:</strong> {datosUsuario.birthPlace}</p>
+                            <p className="card-text">
+                                <strong>Fecha de Nacimiento:</strong>{" "}
+                                {datosUsuario.birthDate ? new Date(datosUsuario.birthDate).toLocaleDateString() : "N/A"}
+                            </p>
+                            <p className="card-text"><strong>Lugar de Nacimiento:</strong> {datosUsuario.birthPlace || "N/A"}</p>
                             <p className="card-text"><strong>Género:</strong> {datosUsuario.gender}</p>
                             <p className="card-text"><strong>Estado Civil:</strong> {datosUsuario.civilStatus}</p>
-                            <button className="btn btn-primary" onClick={() => setEditar(true)}>Editar Perfil</button>
+                            <button className="btn btn-primary" onClick={() => setEditar(true)}>
+                                Editar Perfil
+                            </button>
                         </>
                     )}
                 </div>
             </div>
 
-            {/* Tabla de compras */}
             <div className="mt-4">
                 <h4 className="text-center">Mis Compras</h4>
-                <table className="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID Compra</th>
-                            <th>Total</th>
-                            <th>Fecha</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {compras.map((compra) => (
-                            <tr key={compra.id}>
-                                <td>{compra.id}</td>
-                                <td>${compra.total}</td>
-                                <td>{new Date(compra.fecha_compra).toLocaleDateString()}</td>
-                                <td>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => {
-                                            setCompraSeleccionada(compra); // Guardar la compra seleccionada
-                                            setModalVisible(true); // Abrir el modal
-                                        }}
-                                    >
-                                        Generar Factura
-                                    </button>
-                                </td>
+                {cargando.compras ? (
+                    <p className="text-center">Cargando compras...</p>
+                ) : compras.length > 0 ? (
+                    <table className="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID Compra</th>
+                                <th>Total</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {compras.map((compra) => (
+                                <tr key={compra.id}>
+                                    <td>{compra.id}</td>
+                                    <td>${compra.total}</td>
+                                    <td>{new Date(compra.fecha_compra).toLocaleDateString()}</td>
+                                    <td>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={() => {
+                                                setCompraSeleccionada(compra);
+                                                setModalVisible(true);
+                                            }}
+                                        >
+                                            Generar Factura
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p className="text-center">No hay compras registradas</p>
+                )}
             </div>
 
-            {/* Modal para datos fiscales */}
             {modalVisible && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog">
@@ -318,15 +374,23 @@ const handleGenerarFactura = (compra) => {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setModalVisible(false)}>Cerrar</button>
-                                <button type="button" className="btn btn-primary" onClick={() => {
-                                    if (!datosFiscales.nombreFiscal || !datosFiscales.rfc || !datosFiscales.direccionFiscal) {
-                                        alert("Todos los datos fiscales son requeridos.");
-                                        return;
-                                    }
-                                    setModalVisible(false);
-                                    handleGenerarFactura(compraSeleccionada); // Generar factura con la compra seleccionada
-                                }}>Generar Factura</button>
+                                <button type="button" className="btn btn-secondary" onClick={() => setModalVisible(false)}>
+                                    Cerrar
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        if (!datosFiscales.nombreFiscal || !datosFiscales.rfc || !datosFiscales.direccionFiscal) {
+                                            alert("Todos los datos fiscales son requeridos.");
+                                            return;
+                                        }
+                                        setModalVisible(false);
+                                        handleGenerarFactura(compraSeleccionada);
+                                    }}
+                                >
+                                    Generar Factura
+                                </button>
                             </div>
                         </div>
                     </div>
