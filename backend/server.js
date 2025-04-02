@@ -23,6 +23,29 @@ const db = mysql.createPool({
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client('326746217948-gtj4m7bbops3nu76ouakb1av8kpn14e1.apps.googleusercontent.com');
 
+// Añade esta ruta junto con las demás rutas GET en tu backend
+app.get("/api/vista-usuario/:id", (req, res) => {
+    const { id } = req.params;
+    
+    const query = "SELECT * FROM vista_usuarios WHERE user = ?";
+    
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error("Error al consultar la vista:", err);
+            return res.status(500).json({ 
+                success: false, 
+                message: "Error al obtener datos del usuario" 
+            });
+        }
+        
+        if (result.length > 0) {
+            res.json({ success: true, usuario: result[0] });
+        } else {
+            res.json({ success: false, message: "Usuario no encontrado" });
+        }
+    });
+});
+
 // Luego, en tus rutas, añade este nuevo endpoint:
 app.post("/api/google-login", (req, res) => {
     const { token } = req.body;
