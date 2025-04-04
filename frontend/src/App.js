@@ -568,19 +568,18 @@ const generarPDFVentas = () => {
                     <div className="card-body">
                         <p className="card-text">
                             Total de ventas realizadas: {ventas.length}
-                        </p>
-                        <p className="card-text">
-                            Ingresos totales: $
-                           {ventas.reduce((total, venta) => {
-          const valorNumerico = typeof venta.total === 'string' ? 
-                             parseFloat(venta.total) : 
-                             Number(venta.total);
+                       <p className="card-text">
+        Ingresos totales: $
+        {ventas.reduce((total, venta) => {
+          const valorNumerico = typeof venta.total === 'string' 
+            ? parseFloat(venta.total) 
+            : Number(venta.total);
           return total + (isNaN(valorNumerico) ? 0 : valorNumerico;
         }, 0).toLocaleString('es-MX', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         })}
-                        </p>
+      </p>
                         <button 
                             className="btn btn-primary mt-3"
                             onClick={generarPDFVentas}
