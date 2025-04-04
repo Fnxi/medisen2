@@ -542,7 +542,7 @@ const generarPDFVentas = () => {
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Tipo</th>
-                            <th>Acciones</th>
+                   
                         </tr>
                     </thead>
                     <tbody>
