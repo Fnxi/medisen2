@@ -71,12 +71,12 @@ const generarPDFVentas = () => {
   
   // Título del documento
   doc.setFontSize(18);
-  doc.text('Reporte de Ventas', 105, 20, { align: 'center' });
+  doc.text('Reporte de Ventas - Farmacia', 105, 20, { align: 'center' });
   
   // Información de resumen
   doc.setFontSize(12);
   doc.text(`Total de ventas: ${ventas.length}`, 14, 30);
-  doc.text(`Ingresos totales: $${ventas.reduce((total, venta) => total + venta.total, 0)}`, 14, 40);
+  doc.text(`Ingresos totales: $${ventas.reduce((total, venta) => total + venta.total, 0).toFixed(2)}`, 14, 40);
   
   // Encabezados de la tabla
   doc.setFontSize(14);
@@ -88,7 +88,7 @@ const generarPDFVentas = () => {
   // Datos de las ventas
   doc.setFontSize(10);
   let y = 65;
-  ventas.forEach((venta, index) => {
+  ventas.forEach((venta) => {
     if (y > 280) { // Si llega al final de la página, añade una nueva
       doc.addPage();
       y = 20;
@@ -102,7 +102,11 @@ const generarPDFVentas = () => {
     }
     
     doc.text(venta.id.toString(), 14, y);
-    doc.text(venta.nombre_usuario, 30, y);
+    // Limitar el nombre del usuario si es muy largo
+    const nombreUsuario = venta.nombre_usuario.length > 20 ? 
+      venta.nombre_usuario.substring(0, 17) + '...' : 
+      venta.nombre_usuario;
+    doc.text(nombreUsuario, 30, y);
     doc.text(`$${venta.total.toFixed(2)}`, 100, y);
     doc.text(new Date(venta.created_at).toLocaleDateString(), 140, y);
     y += 10;
@@ -111,6 +115,10 @@ const generarPDFVentas = () => {
     doc.line(14, y, 190, y);
     y += 5;
   });
+  
+  // Pie de página
+  doc.setFontSize(10);
+  doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 290);
   
   // Guardar el PDF
   doc.save(`reporte_ventas_${new Date().toISOString().split('T')[0]}.pdf`);
