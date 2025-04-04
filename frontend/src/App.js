@@ -67,61 +67,111 @@ function App() {
 
 // Función para generar el PDF de ventas
 const generarPDFVentas = () => {
-  const doc = new jsPDF();
-  
-  // Título del documento
-  doc.setFontSize(18);
-  doc.text('Reporte de Ventas - Farmacia', 105, 20, { align: 'center' });
-  
-  // Información de resumen
-  doc.setFontSize(12);
-  doc.text(`Total de ventas: ${ventas.length}`, 14, 30);
-  doc.text(`Ingresos totales: $${ventas.reduce((total, venta) => total + venta.total, 0).toFixed(2)}`, 14, 40);
-  
-  // Encabezados de la tabla
-  doc.setFontSize(14);
-  doc.text('ID', 14, 55);
-  doc.text('Usuario', 30, 55);
-  doc.text('Total', 100, 55);
-  doc.text('Fecha', 140, 55);
-  
-  // Datos de las ventas
-  doc.setFontSize(10);
-  let y = 65;
-  ventas.forEach((venta) => {
-    if (y > 280) { // Si llega al final de la página, añade una nueva
-      doc.addPage();
-      y = 20;
-      // Volver a poner encabezados en nueva página
-      doc.setFontSize(14);
-      doc.text('ID', 14, y);
-      doc.text('Usuario', 30, y);
-      doc.text('Total', 100, y);
-      doc.text('Fecha', 140, y);
-      y = 30;
-    }
+  try {
+    const doc = new jsPDF();
     
-    doc.text(venta.id.toString(), 14, y);
-    // Limitar el nombre del usuario si es muy largo
-    const nombreUsuario = venta.nombre_usuario.length > 20 ? 
-      venta.nombre_usuario.substring(0, 17) + '...' : 
-      venta.nombre_usuario;
-    doc.text(nombreUsuario, 30, y);
-    doc.text(`$${venta.total.toFixed(2)}`, 100, y);
-    doc.text(new Date(venta.created_at).toLocaleDateString(), 140, y);
-    y += 10;
+    // Título del documento
+    doc.setFontSize(18);
+    doc.text('Reporte de Ventas - Farmacia', 105, 20, { align: 'center' });
     
-    // Línea separadora
-    doc.line(14, y, 190, y);
-    y += 5;
-  });
-  
-  // Pie de página
-  doc.setFontSize(10);
-  doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 290);
-  
-  // Guardar el PDF
-  doc.save(`reporte_ventas_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Procesar los datos de ventas
+    const ventasProcesadas = ventas.map(venta => ({
+      ...venta,
+      // Asegurarnos que el total es un número
+      totalNumerico: typeof venta.total === 'string' ? 
+                   parseFloat(venta.total.replace(/[^0-9.-]/g, '')) : 
+                   Number(venta.total)
+    }));
+    
+    // Calcular totales
+    const totalVentas = ventasProcesadas.length;
+    const ingresosTotales = ventasProcesadas.reduce(
+      (sum, v) => sum + v.totalNumerico, 
+      0
+    );
+    
+    // Información de resumen
+    doc.setFontSize(12);
+    doc.text(`Total de ventas: ${totalVentas}`, 14, 30);
+    doc.text(`Ingresos totales: $${ingresosTotales.toLocaleString('es-MX', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`, 14, 40);
+    
+    // Encabezados de la tabla
+    doc.setFontSize(14);
+    doc.text('ID', 14, 55);
+    doc.text('Cliente', 30, 55);
+    doc.text('Total', 120, 55, { align: 'right' });
+    doc.text('Fecha', 160, 55);
+    
+    // Datos de las ventas
+    doc.setFontSize(10);
+    let y = 65;
+    
+    ventasProcesadas.forEach((venta) => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+        doc.setFontSize(14);
+        doc.text('ID', 14, y);
+        doc.text('Cliente', 30, y);
+        doc.text('Total', 120, y, { align: 'right' });
+        doc.text('Fecha', 160, y);
+        y = 30;
+      }
+      
+      doc.text(venta.id.toString(), 14, y);
+      
+      // Nombre del cliente (truncado si es muy largo)
+      const nombreCliente = venta.nombre_usuario.length > 25 ? 
+        venta.nombre_usuario.substring(0, 22) + '...' : 
+        venta.nombre_usuario;
+      doc.text(nombreCliente, 30, y);
+      
+      // Total alineado a la derecha con formato monetario
+      doc.text(
+        `$${venta.totalNumerico.toLocaleString('es-MX', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}`, 
+        120, 
+        y, 
+        { align: 'right' }
+      );
+      
+      // Fecha formateada
+      const fechaVenta = new Date(venta.created_at);
+      doc.text(
+        fechaVenta.toLocaleDateString('es-MX'), 
+        160, 
+        y
+      );
+      
+      y += 10;
+      
+      // Línea separadora delgada
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, y, 190, y);
+      y += 5;
+    });
+    
+    // Pie de página
+    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `Reporte generado el: ${new Date().toLocaleString('es-MX')}`, 
+      14, 
+      290
+    );
+    
+    // Guardar el PDF
+    doc.save(`Reporte_Ventas_${new Date().toISOString().slice(0, 10)}.pdf`);
+    
+  } catch (error) {
+    console.error('Error al generar el PDF:', error);
+    alert('Ocurrió un error al generar el reporte. Por favor intenta nuevamente.');
+  }
 };
 
     const verifySession = async (storedUserData) => {
@@ -521,7 +571,15 @@ const generarPDFVentas = () => {
                         </p>
                         <p className="card-text">
                             Ingresos totales: $
-                            {ventas.reduce((total, venta) => total + venta.total, 0)}
+                           {ventas.reduce((total, venta) => {
+          const valorNumerico = typeof venta.total === 'string' ? 
+                             parseFloat(venta.total) : 
+                             Number(venta.total);
+          return total + (isNaN(valorNumerico) ? 0 : valorNumerico;
+        }, 0).toLocaleString('es-MX', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}
                         </p>
                         <button 
                             className="btn btn-primary mt-3"
