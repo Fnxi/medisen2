@@ -8,6 +8,7 @@ import Perfil from "./Componentes/Perfil";
 import { PieChart } from 'react-minimal-pie-chart';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { jsPDF } from 'jspdf';
 
 // Importa Firebase y Realtime Database
 import { database, ref, onValue } from './firebase';
@@ -61,6 +62,59 @@ function App() {
             verifySession(parsedUserData);
         }
     }, []);
+
+
+
+// Función para generar el PDF de ventas
+const generarPDFVentas = () => {
+  const doc = new jsPDF();
+  
+  // Título del documento
+  doc.setFontSize(18);
+  doc.text('Reporte de Ventas', 105, 20, { align: 'center' });
+  
+  // Información de resumen
+  doc.setFontSize(12);
+  doc.text(`Total de ventas: ${ventas.length}`, 14, 30);
+  doc.text(`Ingresos totales: $${ventas.reduce((total, venta) => total + venta.total, 0)}`, 14, 40);
+  
+  // Encabezados de la tabla
+  doc.setFontSize(14);
+  doc.text('ID', 14, 55);
+  doc.text('Usuario', 30, 55);
+  doc.text('Total', 100, 55);
+  doc.text('Fecha', 140, 55);
+  
+  // Datos de las ventas
+  doc.setFontSize(10);
+  let y = 65;
+  ventas.forEach((venta, index) => {
+    if (y > 280) { // Si llega al final de la página, añade una nueva
+      doc.addPage();
+      y = 20;
+      // Volver a poner encabezados en nueva página
+      doc.setFontSize(14);
+      doc.text('ID', 14, y);
+      doc.text('Usuario', 30, y);
+      doc.text('Total', 100, y);
+      doc.text('Fecha', 140, y);
+      y = 30;
+    }
+    
+    doc.text(venta.id.toString(), 14, y);
+    doc.text(venta.nombre_usuario, 30, y);
+    doc.text(`$${venta.total.toFixed(2)}`, 100, y);
+    doc.text(new Date(venta.created_at).toLocaleDateString(), 140, y);
+    y += 10;
+    
+    // Línea separadora
+    doc.line(14, y, 190, y);
+    y += 5;
+  });
+  
+  // Guardar el PDF
+  doc.save(`reporte_ventas_${new Date().toISOString().split('T')[0]}.pdf`);
+};
 
     const verifySession = async (storedUserData) => {
         if (storedUserData && storedUserData.id) {
@@ -413,88 +467,90 @@ function App() {
             <div className="container mt-4">
                 {isAuthenticated && userData && (
                     <>
-                        {userType === 2 && mostrarDashboard && (
-                            <>
-                                <h3 className="text-center">Dashboard del Administrador</h3>
-                                <div className="row">
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <h5 className="card-title">Productos Disponibles</h5>
-                                                <p className="card-text">{productos.length}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <h5 className="card-title">Usuarios Registrados</h5>
-                                                <p className="card-text">{usuarios.length}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <h5 className="card-title">Ventas Totales</h5>
-                                                <p className="card-text">{ventas.length}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="row mt-4">
-                                    <div className="col-md-6">
-                                        <h4>Gráfico de Productos</h4>
-                                        <PieChart
-                                            data={generarDatosGrafico()}
-                                            style={{ height: "300px" }}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <h4>Resumen de Ventas</h4>
-                                        <div className="card">
-                                            <div className="card-body">
-                                                <p className="card-text">
-                                                    Total de ventas realizadas: {ventas.length}
-                                                </p>
-                                                <p className="card-text">
-                                                    Ingresos totales: $
-                                                    {ventas.reduce((total, venta) => total + venta.total, 0)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="row mt-4">
-                                    <div className="col-md-12">
-                                        <h4>Lista de Usuarios</h4>
-                                        <table className="table table-dark table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Nombre</th>
-                                                    <th>Email</th>
-                                                    <th>Tipo</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {usuarios.map((usuario) => (
-                                                    <tr key={usuario.id}>
-                                                        <td>{usuario.name}</td>
-                                                        <td>{usuario.email}</td>
-                                                        <td>{usuario.user === 1 ? "Usuario" : "Administrador"}</td>
-                                                        <td>
-                                                            <button className="btn btn-warning">Editar</button>
-                                                            <button className="btn btn-danger">Eliminar</button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                   {userType === 2 && mostrarDashboard && (
+    <>
+        <h3 className="text-center">Dashboard del Administrador</h3>
+        <div className="row">
+            <div className="col-md-4">
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Productos Disponibles</h5>
+                        <p className="card-text">{productos.length}</p>
+                    </div>
+                </div>
+            </div>
+            <div className="col-md-4">
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Usuarios Registrados</h5>
+                        <p className="card-text">{usuarios.length}</p>
+                    </div>
+                </div>
+            </div>
+            <div className="col-md-4">
+                <div className="card">
+                    <div className="card-body">
+                        <h5 className="card-title">Ventas Totales</h5>
+                        <p className="card-text">{ventas.length}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div className="row mt-4">
+            <div className="col-md-6">
+                <h4>Gráfico de Productos</h4>
+                <PieChart
+                    data={generarDatosGrafico()}
+                    style={{ height: "300px" }}
+                />
+            </div>
+            <div className="col-md-6">
+                <h4>Resumen de Ventas</h4>
+                <div className="card">
+                    <div className="card-body">
+                        <p className="card-text">
+                            Total de ventas realizadas: {ventas.length}
+                        </p>
+                        <p className="card-text">
+                            Ingresos totales: $
+                            {ventas.reduce((total, venta) => total + venta.total, 0)}
+                        </p>
+                        <button 
+                            className="btn btn-primary mt-3"
+                            onClick={generarPDFVentas}
+                        >
+                            Generar Reporte PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div className="row mt-4">
+            <div className="col-md-12">
+                <h4>Lista de Usuarios</h4>
+                <table className="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {usuarios.map((usuario) => (
+                            <tr key={usuario.id}>
+                                <td>{usuario.name}</td>
+                                <td>{usuario.email}</td>
+                                <td>{usuario.user === 1 ? "Usuario" : "Administrador"}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </>
+)}
 
                         {userType === 2 && mostrarProductos && (
                             <>
