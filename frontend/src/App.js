@@ -545,51 +545,53 @@ const generarPDFVentas = () => {
                     </div>
                 </div>
             </div>
-            <div className="col-md-4">
-                <div className="card">
-                    <div className="card-body">
-                        <h5 className="card-title">Ventas Totales</h5>
-                        <p className="card-text">{ventas.length}</p>
-                    </div>
-                </div>
+        <div className="col-md-4">
+    <div className="card">
+        <div className="card-body">
+            <h5 className="card-title">Ventas Totales</h5>
+            <p className="card-text">{ventas.length}</p>
+        </div>
+    </div>
+</div>
+</div>
+<div className="row mt-4">
+    <div className="col-md-6">
+        <h4>Gráfico de Productos</h4>
+        <PieChart
+            data={generarDatosGrafico()}
+            style={{ height: "300px" }}
+        />
+    </div>
+    <div className="col-md-6">
+        <h4>Resumen de Ventas</h4>
+        <div className="card">
+            <div className="card-body">
+                <p className="card-text">
+                    Total de ventas realizadas: {ventas.length}
+                </p>
+                <p className="card-text">
+                    Ingresos totales: $
+                    {ventas
+                        .reduce((total, venta) => {
+                            const valor = parseFloat(venta.total) || 0;
+                            return total + valor;
+                        }, 0)
+                        .toLocaleString('es-MX', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })
+                    }
+                </p>
+                <button 
+                    className="btn btn-primary mt-3"
+                    onClick={generarPDFVentas}
+                >
+                    Generar Reporte PDF
+                </button>
             </div>
         </div>
-        <div className="row mt-4">
-            <div className="col-md-6">
-                <h4>Gráfico de Productos</h4>
-                <PieChart
-                    data={generarDatosGrafico()}
-                    style={{ height: "300px" }}
-                />
-            </div>
-            <div className="col-md-6">
-                <h4>Resumen de Ventas</h4>
-                <div className="card">
-                    <div className="card-body">
-                        <p className="card-text">
-                            Total de ventas realizadas: {ventas.length}
-                       <p className="card-text">
-        Ingresos totales: $
-        {ventas.reduce((total, venta) => {
-          const valorNumerico = typeof venta.total === 'string' 
-            ? parseFloat(venta.total) 
-            : Number(venta.total);
-          return total + (isNaN(valorNumerico) ? 0 : valorNumerico;
-        }, 0).toLocaleString('es-MX', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })}
-      </p>
-                        <button 
-                            className="btn btn-primary mt-3"
-                            onClick={generarPDFVentas}
-                        >
-                            Generar Reporte PDF
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
+</div>
         <div className="row mt-4">
             <div className="col-md-12">
                 <h4>Lista de Usuarios</h4>
